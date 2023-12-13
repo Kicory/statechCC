@@ -24,11 +24,11 @@ function Chef.step()
 		St.printStatusToMonitor(Goals, moni)
 	end
 
-	local requiredRecipes, requiredUnits = table.unpack(St.filterRequired(Recipes, Goals))
+	local craftRequirements = St.getRequirements(Recipes, Goals)
 
 	local factoryScd = TH.checkAll(
 		function() M.harvestToBuffer(St.bufferAE) end,
-		function() return M.makeFactoryCraftSchedule(requiredRecipes, requiredUnits, St.getCatalogueCopy()) end)[2]
+		function() return M.makeFactoryCraftSchedule(craftRequirements, St.getCatalogueCopy()) end)[2]
 
 	os.sleep(0.01)	-- 1 tick for AE system to prepare.
 

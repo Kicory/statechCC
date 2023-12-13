@@ -53,6 +53,7 @@ Factory Schedule example:
 M = {}
 
 local machineList = nil
+local machineNames = nil
 --------------------------------------------
 local function checkStorageEmpty(hatchName)
 	return (next(peripheral.call(hatchName, "items")) == nil)
@@ -101,103 +102,136 @@ local function isEmptyMachine(info)
 	return TH.allAnd(TH.checkAll(table.unpack(predicates)))
 end
 --------------------------------------------
-local function isItemFitIn(storageName, itemID, amt)
+local function itemFitsCount(storageName, itemID, amt)
 	local curItems = peripheral.call(storageName, "items")
 	for _, slot in pairs(curItems) do
-		if ((itemID == slot.name) and (slot.maxCount >= slot.count + amt)) then
-			return true
+		if itemID == slot.name then
+			return math.floor((slot.maxCount - slot.count) / amt)
 		end
 	end
-	return false
+	return 0
 end
 
-local function isFluidFitsInTank(tankName, fluidID, amt)
+local function fluidFitsTankCount(tankName, fluidID, amt)
 	local tanks = peripheral.call(tankName, "tanks")
 	for _, tank in pairs(tanks) do
-		if (fluidID == tank.name) and (tank.capacity >= tank.amount + amt) then
-			return true
+		if fluidID == tank.name then
+			return math.floor((tank.capacity - tank.amount) / amt)
 		end
 	end
+	return 0
 end
 
-local function isFluidFitIn(hatchNames, fluidID, amt)
-	local predicates = {}
+local function fluidFitCount(hatchNames, fluidID, amt)
+	local fitCounts = {}
 	for _, hatchName in ipairs(hatchNames) do
-		predicates[#predicates + 1] = function() return isFluidFitsInTank(hatchName) end
+		fitCounts[#fitCounts + 1] = function() return fluidFitsTankCount(hatchName) end
 	end
-	return TH.allOr(TH.checkAll(table.unpack(predicates)))
+	return TH.allMin(TH.checkAll(table.unpack(fitCounts)))
 end
 
 --- Returns true if the machine can accept unit input of recipe.
 ---@param recipe table Recipe to check
 ---@param info table machineInfo
 ---@return boolean
-local function isUnitInputFitIn(recipe, info)
+local function unitInputFitCount(recipe, info)
 	local unitInput = recipe.unitInput
-	local predicates = {}
+	local fitCounts = {}
 
 	if (info.singleBlockMachineName ~= nil) then
 		-- Singleblock machine case
 		local name = info.singleBlockMachineName
 		for itemID, amt in pairs(unitInput.item or {}) do
-			predicates[#predicates + 1] = function() return isItemFitIn(name, itemID, amt) end
+			fitCounts[#fitCounts + 1] = function() return itemFitsCount(name, itemID, amt) end
 		end
 		for fluidID, amt in pairs(unitInput.fluid or {}) do
-			predicates[#predicates + 1] = function() return isFluidFitsInTank(name, fluidID, amt) end
+			fitCounts[#fitCounts + 1] = function() return fluidFitsTankCount(name, fluidID, amt) end
 		end
 	else
 		-- Multiblock machine case
 		for itemID, amt in pairs(unitInput.item or {}) do
-			predicates[#predicates + 1] = function() return isItemFitIn(info.itemInput, itemID, amt) end
+			fitCounts[#fitCounts + 1] = function() return itemFitsCount(info.itemInput, itemID, amt) end
 		end
 		for fluidID, amt in pairs(unitInput.fluid or {}) do
-			predicates[#predicates + 1] = function() return isFluidFitIn(info.fluidInputs, fluidID, amt) end
+			fitCounts[#fitCounts + 1] = function() return fluidFitCount(info.fluidInputs, fluidID, amt) end
 		end
 	end
 
-	return TH.allAnd(TH.checkAll(table.unpack(predicates)))
+	return TH.allMin(TH.checkAll(table.unpack(fitCounts)))
 end
 --------------------------------------------
+local function getCraftingSpeed(info)
+	local ci = info.wrapped.getCraftingInformation()
+	local base = ci.baseRecipeCost
+	local curr = ci.currentRecipeCost
+	if base ~= nil and curr ~= nil then
+		return curr / base
+	else
+		return 1
+	end
+end
+
+local function getMachineReadiness(machineInfo, recipe)
+	local empty, fitUnits, minPowOk, craftSp = table.unpack(TH.checkAll(
+		function() return isEmptyMachine(machineInfo) end,
+		function() return unitInputFitCount(recipe, machineInfo) end,
+		function() return recipe.machineFilter(machineInfo) end,
+		function() return getCraftingSpeed(machineInfo) end
+	))
+	return empty, fitUnits, minPowOk, craftSp
+end
+
 local function canCraftNow(machineInfo, recipe)
 	local empty, fits, minPow = table.unpack(TH.checkAll(
 		function() return isEmptyMachine(machineInfo) end,
-		function() return isUnitInputFitIn(recipe, machineInfo) end,
+		function() return unitInputFitCount(recipe, machineInfo) end,
 		function() return recipe.machineFilter(machineInfo) end))
 	return minPow and (empty or fits)
 end
 
-local function markMachine(machineName, info, recipe, tryChangeRequiredUnit, schedule, ctlgFuture)
-	if (canCraftNow(info, recipe)) then
-		-- This machine can craft this recipe now...
-		local previousRecipe = schedule[machineName]
-		if (previousRecipe == nil) or (recipe.rank < previousRecipe.rank) then
-			-- ...and not yet scheduled or should be preempted...
-			if tryChangeRequiredUnit(-1) then
-				-- ...and need to craft more...
-				if St.tryUse(ctlgFuture, recipe.unitInput) then
-					-- ...and have enough material
-					schedule[machineName] = {
-						unitInput = recipe.unitInput,		-- Basic information
-						unitOutput = recipe.unitOutput,		-- For tracking output catalogue
-						rank = recipe.rank,
-						dispName = recipe.dispName,			-- for debug
-						itemInput = info.itemInput,		 	-- Multiblock machine only
-						fluidInputs = info.fluidInputs,		-- Multiblock machine only
-					}
-				else
-					-- Revert
-					tryChangeRequiredUnit(1)
-				end
-			end
-		end
-	end
+local function markMachine(machineName, info, req, schedule, ctlgFuture)
+	local recipe = req.recipe
+	local isEmpty, fitCount, minPowOk, craftingSpeed = getMachineReadiness(info, recipe)
+	
+	-- No requirements (This happens when other machines already took all requirements...)
+	if req.required == 0 then return end
+	
+	-- Calulate numbers to try input on machine.
+	local countTry = 0
+
+	if not minPowOk then return
+	elseif isEmpty then countTry = 1
+	elseif fitCount == 0 then return
+	else countTry = math.min(fitCount, req.required, math.max(math.floor((req.lastTried or 1) * 1.5), math.ceil(craftingSpeed))) end
+	req.lastTried = countTry
+
+	-- Drop if machine is already occupied by higher rank.
+	local previousRecipe = schedule[machineName]
+	if previousRecipe and recipe.rank > previousRecipe.rank then return end
+
+	-- Calculate actual craftable unit count
+	local actualScheduled = St.tryUse(ctlgFuture, recipe.unitInput, countTry)
+	if actualScheduled == 0 then return end
+
+	-- Do schedule
+	schedule[machineName] = {
+		unitInput = Helper.makeMultipliedIO(recipe.unitInput, actualScheduled),		-- Basic information
+		unitOutput = Helper.makeMultipliedIO(recipe.unitOutput, actualScheduled),	-- For tracking output catalogue
+		rank = recipe.rank,					-- for preemption
+		dispName = recipe.dispName,			-- for debug
+		itemInput = info.itemInput,			-- Multiblock machine only
+		fluidInputs = info.fluidInputs,		-- Multiblock machine only
+	}
+
+	-- Mark scheduled
+	req.required = req.required - actualScheduled
 end
 
-local function makeCraftSchedule(recipe, tryChangeRequiredUnit, schedule, ctlgFuture)
+local function makeCraftSchedule(req, schedule, ctlgFuture)
 	local markers = {}
-	for _, machineType in ipairs(recipe.machineTypes) do
-		for machineName, info in pairs(machineList[machineType]) do
-			markers[#markers + 1] = function() markMachine(machineName, info, recipe, tryChangeRequiredUnit, schedule, ctlgFuture) end
+	for _, machineType in ipairs(req.recipe.machineTypes) do
+		for _, machineName in ipairs(machineNames[machineType]) do
+			markers[#markers + 1] = function() markMachine(machineName, machineList[machineType][machineName], req, schedule, ctlgFuture) end
 		end
 	end
 
@@ -211,6 +245,7 @@ function M.refreshMachines()
 	end
 
 	machineList = {}
+	machineNames = {}
 
 	local function registerMachine(machineType, machineName, machineWrapped)
 		local machineInfo = {
@@ -228,6 +263,7 @@ function M.refreshMachines()
 		machineInfo.singleBlockMachineName = machineName
 
 		machineList[machineType][machineName] = machineInfo
+		table.insert(machineNames[machineType], machineName)
 
 		-- return for filter
 		return false
@@ -236,39 +272,33 @@ function M.refreshMachines()
 	-- Find peripherals
 	for _, machineType in pairs(machineTypes) do
 		machineList[machineType] = {}
+		machineNames[machineType] = {}
 		peripheral.find(machineType, function(machineName, machineWrapped) registerMachine(machineType, machineName, machineWrapped) end)
 	end
 
 	-- Add multiblock machines manually
 	for machineType, bigMachines in pairs(BigMachines) do
 		machineList[machineType] = {}
+		machineNames[machineType] = {}
 		for machineName, machineInfo in pairs(bigMachines) do
 			machineInfo.wrapped = peripheral.wrap(machineName)
 			machineInfo.getBasePower = function() return machineInfo.wrapped.getCraftingInformation().maxRecipeCost end
 			machineInfo.isBusy = machineInfo.wrapped.isBusy
 			machineList[machineType][machineName] = machineInfo
+			table.insert(machineNames[machineType], machineName)
 		end
 	end
 end
 
 ---@param recipesList table Recipes to check fit in
 ---@return table
-function M.makeFactoryCraftSchedule(recipesList, requiredUnits, ctlgFuture)
+function M.makeFactoryCraftSchedule(craftReqs, ctlgFuture)
 	assert(ctlgFuture ~= nil)
 
 	local resultSchedule = {}
 	local scheduleMakers = {}
-	for idx, recipe in ipairs(recipesList) do
-		local function tryChangeRequiredUnit(offset)
-			offset = offset or -1
-			if (requiredUnits[idx] + offset) >= 0 then
-				requiredUnits[idx] = requiredUnits[idx] + offset
-				return true
-			else
-				return false
-			end
-		end
-		scheduleMakers[#scheduleMakers + 1] = function() makeCraftSchedule(recipe, tryChangeRequiredUnit, resultSchedule, ctlgFuture) end
+	for _, req in ipairs(craftReqs) do
+		scheduleMakers[#scheduleMakers + 1] = function() makeCraftSchedule(req, resultSchedule, ctlgFuture) end
 	end
 
 	St.clearLackingMaterialsSet()
@@ -305,7 +335,7 @@ function M.getProperFluidHatches(craftSchedule)
 	for fluidID, amt in pairs(fluids) do
 		for _, hatch in ipairs(hatches) do
 			funcs[#funcs + 1] = function()
-				if isFluidFitsInTank(hatch, fluidID, amt) then
+				if fluidFitsTankCount(hatch, fluidID, amt) then
 					fitResult[hatch] = makeFeedFluidInfo(fluidID, amt)
 				end
 			end

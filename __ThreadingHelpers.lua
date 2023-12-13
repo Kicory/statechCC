@@ -39,6 +39,22 @@ function TH.allOr(...)
     return result
 end
 
+function TH.allMax(...)
+    local result = nil
+    for _, v in ipairs(...) do
+        result = math.max(result or v, v)
+    end
+    return result
+end
+function TH.allMin(...)
+    local result = nil
+    for _, v in ipairs(...) do
+        result = math.min(result or v, v)
+    end
+    return result
+end
+
+
 function TH.doMany(toRepeat, repeatCount)
     local functions = {}
     for i = 1, repeatCount do

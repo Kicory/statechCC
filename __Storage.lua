@@ -110,42 +110,51 @@ end
 --- Try consume material from catalogue given.
 ---@param ctlg table
 ---@param toUse table Materials to use, in unitInput format
----@return boolean True if successfully used
-function St.tryUse(ctlg, toUse)
-	local result = true
+---@param limit integer Maximum units to use.
+---@return integer count of units successfully used
+function St.tryUse(ctlg, toUse, limit)
+	assert(limit ~= nil and limit > 0)
+
+	local result = nil
 	local enough
 	for itemID, amt in pairs(toUse.item or {}) do
-		enough = ctlg[itemID] >= amt
-		result = result and enough
+		local cnt =  math.floor(ctlg[itemID] / amt)
+		result = math.min(result or cnt, cnt)
+
+		enough = cnt > limit
 		if not enough then
 			lackingMaterialsSet[itemID] = true
 		end
 	end
 	for fluidID, amt in pairs(toUse.fluid or {}) do
-		enough = ctlg[fluidID] >= amt
-		result = result and enough
+		local cnt = math.floor(ctlg[fluidID] / amt)
+		result = math.min(result or cnt, cnt)
+
+		enough = cnt > limit
 		if not enough then
 			lackingMaterialsSet[fluidID] = true
 		end
 	end
-	if result then
+	result = math.min(limit, result)
+
+	if result ~= 0 then
 		for itemID, amt in pairs(toUse.item or {}) do
-			ctlg[itemID] = ctlg[itemID] - amt
+			ctlg[itemID] = ctlg[itemID] - (amt * result)
 		end
 		for fluidID, amt in pairs(toUse.fluid or {}) do
-			ctlg[fluidID] = ctlg[fluidID] - amt
+			ctlg[fluidID] = ctlg[fluidID] - (amt * result)
 		end
-		return true
-	else
-		return false
 	end
+	
+	return result
 end
 -----------------------------------
-function St.filterRequired(wholeRecipes, goals)
+function St.getRequirements(wholeRecipes, goals)
 	local potentialCtlg = calcCtlg(catalogue, craftingCtlg, add, 0)
 	local factorySizeFactor = 3
 	local resultRecipes = {}
 	local requiredUnits = {}
+	local craftRequirements = {}
 
 	local function getRequiredUnit(recipe)
 		local output = recipe.unitOutput
@@ -164,12 +173,13 @@ function St.filterRequired(wholeRecipes, goals)
 	for _, recipe in ipairs(wholeRecipes) do
 		local unitCount = getRequiredUnit(recipe)
 		if unitCount ~= 0 then
-			local idx = #resultRecipes + 1
-			resultRecipes[idx] = recipe
-			requiredUnits[idx] = unitCount
+			craftRequirements[#craftRequirements + 1] = {
+				recipe = recipe,
+				required = unitCount,
+			}
 		end
 	end
-	return {resultRecipes, requiredUnits}
+	return craftRequirements
 end
 
 function St.applyHarvestedCatalogue(harvestedCtlg)

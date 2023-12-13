@@ -97,3 +97,15 @@ function Helper.dispNameMaker(id)
 
 	return string.gsub('_' .. unColoned, "_(.)", function(c) return ' ' .. string.upper(c) end):sub(2)
 end
+
+function Helper.makeMultipliedIO(io, factor)
+	local ret = {}
+	ret.item = {}
+	for id, amt in pairs(io.item or {}) do
+		ret.item[id] = amt * factor
+	end
+	for id, amt in pairs(io.fluid or {}) do
+		ret.fluid[id] = amt * factor
+	end
+	return ret
+end
