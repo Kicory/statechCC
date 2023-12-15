@@ -5,5 +5,5 @@ Goals = {
 	[Item.copper_plate] = 500,
 	[Item.copper_wire] = 3000,
 	[Item.copper_curved_plate] = 200,
-	[Fluid.liquid_ender] = 16000
+	[Item.bronze_rotor] = 10,
 }

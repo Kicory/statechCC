@@ -3,12 +3,14 @@ Prefix = {
 	techReborn = "techreborn:",
 	vanilla = "minecraft:",
 	create = "create:",
+	adAstra = "ad_astra:"
 }
 
 local mi = Prefix.moin
 local tr = Prefix.techReborn
 local va = Prefix.vanilla
 local cr = Prefix.create
+local ad = Prefix.adAstra
 
 Item = {
 	copper_ingot										= va .. "copper_ingot",
@@ -20,12 +22,17 @@ Item = {
 	glass												= va .. "glass",
 	glass_pane											= va .. "glass_pane",
 	paper												= va .. "paper",
+	hopper												= va .. "hopper",
 	refined_iron_ingot 									= tr .. "refined_iron_ingot",
 	calcite_dust 										= tr .. "calcite_dust",
 	limestone 											= cr .. "limestone",
 	ender_pearl_dust									= tr .. "ender_pearl_dust",
 	tungstensteel_ingot									= tr .. "tungstensteel_ingot",
 	tungstensteel_plate									= tr .. "tungstensteel_plate",
+	calorite_ingot										= ad .. "calorite_ingot",
+	calorite_plate										= ad .. "calorite_plate",
+	desh_ingot											= ad .. "desh_ingot",
+	desh_plate											= ad .. "desh_plate",
 
 	-- MI things (too much)
 		acetylene_bucket 								= mi .. "acetylene_bucket",
@@ -990,6 +997,7 @@ Item = {
 }
 
 Fluid = {
+	empty									= va .. "empty",
 	water									= va .. "water",
 	lava									= va .. "lava",
 
@@ -1123,4 +1131,28 @@ PpType = {
 	energyCell = "ae2:energy_cell",
 	denseEnergyCell = "ae2:dense_energy_cell",
 	creativeEnergyCell = "ae2:creative_energy_cell",
+}
+
+MatType = {
+	copper = "copper",
+	bronze = "bronze",
+	gold = "gold",
+	aluminum = "aluminum",
+	electrum = "electrum",
+	battery_alloy = "battery_alloy",
+	silver = "silver",
+	tin = "tin",
+	iron = "iron",
+	invar = "invar",
+	silicon = "silicon",
+	steel = "steel",
+	cupronickel = "cupronickel",
+	stainless_steel = "stainless_steel",
+	calorite = "calorite",
+	desh = "desh",
+	annealed_copper = "annealed_copper",
+	platinum = "platinum",
+	titanium = "titanium",
+	tungstensteel = "tungstensteel",
+	kanthal = "kanthal",
 }

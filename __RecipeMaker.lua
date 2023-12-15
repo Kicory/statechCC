@@ -72,3 +72,231 @@ function Recipes:makeCompressorRecipes(...)
 		}
 	end
 end
+
+--- Make rod recipes. [single Ingot ID, double ingot ID (if there's no double ingot, give nil), rod ID]
+function Recipes:makeCutterRodRecipes(...)
+	local ps = table.pack(...)
+	for idx = 1, #ps, 3 do
+		local fromID = ps[idx]
+		local fromDoubleID = ps[idx + 1]
+		local toID = ps[idx + 2]
+		if fromDoubleID then
+			self:new {
+				dispName = Helper.dispNameMaker(toID) .. " from Double",
+				unitInput = {
+					item = {
+						[fromDoubleID] = 1
+					},
+					fluid = {
+						[Fluid.lubricant] = 10
+					}
+				},
+				unitOutput = {
+					item = {
+						[toID] = 4
+					}
+				},
+				machineTypes = {
+					Machine.electric_cutting_machine
+				},
+				minimumPower = 2
+			}
+		end
+		if fromID then
+			self:new {
+				dispName = Helper.dispNameMaker(toID),
+				unitInput = {
+					item = {
+						[fromID] = 1
+					},
+					fluid = {
+						[Fluid.lubricant] = 10
+					}
+				},
+				unitOutput = {
+					item = {
+						[toID] = 2
+					}
+				},
+				machineTypes = {
+					Machine.electric_cutting_machine
+				},
+				minimumPower = 2
+			}
+		end
+	end
+end
+
+--- Make blade recipes. [Curved plate ID, rod ID, blade ID]
+function Recipes:makePackerBladeRecipes(...)
+	local ps = table.pack(...)
+	for idx = 1, #ps, 3 do
+		local curvedID = ps[idx]
+		local rodID = ps[idx + 1]
+		local bladeID = ps[idx + 2]
+		self:new {
+			dispName = Helper.dispNameMaker(bladeID) .. " with Packer",
+			unitInput = {
+				item = {
+					[curvedID] = 2,
+					[rodID] = 1,
+				}
+			},
+			unitOutput = {
+				item = {
+					[bladeID] = 4,
+				}
+			},
+			machineTypes = {
+				Machine.electric_packer
+			},
+			minimumPower = 2
+		}
+	end
+end
+
+--- Make blade recipes. [plate ID, ring ID, gear ID]
+function Recipes:makeAssemGearRecipes(...)
+	local ps = table.pack(...)
+	for idx = 1, #ps, 3 do
+		local plateID = ps[idx]
+		local ringID = ps[idx + 1]
+		local gearID = ps[idx + 2]
+		self:new {
+			dispName = Helper.dispNameMaker(gearID) .. " with Assembler",
+			unitInput = {
+				item = {
+					[plateID] = 4,
+					[ringID] = 1,
+				},
+				fluid = {
+					[Fluid.soldering_alloy] = 100,
+				}
+			},
+			unitOutput = {
+				item = {
+					[gearID] = 2,
+				}
+			},
+			machineTypes = {
+				Machine.assembler
+			},
+			minimumPower = 2
+		}
+	end
+end
+
+--- Make drill head recipes. [plate ID, curved plate ID, rod ID, gear ID, drill head ID]
+function Recipes:makeAssemDrillHeadRecipes(...)
+	local ps = table.pack(...)
+	for idx = 1, #ps, 5 do
+		local plateID = ps[idx]
+		local curvedID = ps[idx + 1]
+		local rodID = ps[idx + 2]
+		local gearID = ps[idx + 3]
+		local dhID = ps[idx + 4]
+		self:new {
+			dispName = Helper.dispNameMaker(dhID) .. " with Assembler",
+			unitInput = {
+				item = {
+					[plateID] = 1,
+					[curvedID] = 2,
+					[rodID] = 1,
+					[gearID] = 2,
+				},
+				fluid = {
+					[Fluid.soldering_alloy] = 100,
+				}
+			},
+			unitOutput = {
+				item = {
+					[dhID] = 1,
+				}
+			},
+			machineTypes = {
+				Machine.assembler
+			},
+			minimumPower = 2
+		}
+	end
+end
+
+--- Make rotor recipes. [Blade ID, ring ID, rotor ID]
+function Recipes:makeAssemRotorRecipes(...)
+	local ps = table.pack(...)
+	for idx = 1, #ps, 3 do
+		local bladeID = ps[idx]
+		local ringID = ps[idx + 1]
+		local rotorID = ps[idx + 2]
+		self:new {
+			dispName = Helper.dispNameMaker(rotorID) .. " with Assembler",
+			unitInput = {
+				item = {
+					[bladeID] = 4,
+					[ringID] = 1,
+				},
+				fluid = {
+					[Fluid.soldering_alloy] = 100,
+				}
+			},
+			unitOutput = {
+				item = {
+					[rotorID] = 1,
+				}
+			},
+			machineTypes = {
+				Machine.assembler
+			},
+			minimumPower = 2
+		}
+	end
+end
+
+--- Make wiremill recipes. [plate ID, wire ID, fineWire ID (if there is no finewire, input nil)]
+function Recipes:makeWiremillRecipes(...)
+	local ps = table.pack(...)
+	for idx = 1, #ps, 3 do
+		local plateID = ps[idx]
+		local wireID = ps[idx + 1]
+		local fineWireID = ps[idx + 2]
+		if wireID then
+			self:new {
+				dispName = Helper.dispNameMaker(wireID),
+				unitInput = {
+					item = {
+						[plateID] = 1
+					}
+				},
+				unitOutput = {
+					item = {
+						[wireID] = 2
+					}
+				},
+				machineTypes = {
+					Machine.electric_wiremill
+				},
+				minimumPower = 2
+			}
+		end
+		if wireID and fineWireID then
+			self:new {
+				dispName = Helper.dispNameMaker(fineWireID),
+				unitInput = {
+					item = {
+						[wireID] = 1
+					}
+				},
+				unitOutput = {
+					item = {
+						[fineWireID] = 4
+					}
+				},
+				machineTypes = {
+					Machine.electric_wiremill
+				},
+				minimumPower = 2
+			}
+		end
+	end
+end
+

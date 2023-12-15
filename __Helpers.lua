@@ -42,8 +42,14 @@ function Helper.printPretty(content)
 	end
 	local x, y = term.getSize()
 	print(string.rep("-", x))
-	textutils.pagedPrint(str, y - 9)
+	textutils.pagedPrint(str, y - 15)
 	print(string.rep("-", x))
+end
+
+function Helper.concatListInPlace(list, ...)
+	for _, v in ipairs(table.pack(...)) do
+		list[#list + 1] = v
+	end
 end
 
 function Helper.round(a)
@@ -101,11 +107,22 @@ end
 function Helper.makeMultipliedIO(io, factor)
 	local ret = {}
 	ret.item = {}
+	ret.fluid = {}
 	for id, amt in pairs(io.item or {}) do
 		ret.item[id] = amt * factor
 	end
 	for id, amt in pairs(io.fluid or {}) do
 		ret.fluid[id] = amt * factor
+	end
+	return ret
+end
+
+function Helper.makeIDListOver(materials, templates)
+	local ret = {}
+	for _, m in ipairs(materials) do
+		for _, t in ipairs(templates) do
+			ret[#ret + 1] = string.gsub(t, "%%m", m)
+		end
 	end
 	return ret
 end

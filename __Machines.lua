@@ -198,13 +198,13 @@ local function markMachine(machineName, info, req, schedule, ctlgFuture)
 	
 	-- Calulate numbers to try input on machine.
 	local countTry = 0
-
+	
+	req.expInput = req.expInput or 1
 	if not minPowOk then return
 	elseif isEmpty then countTry = 1
 	elseif fitCount == 0 then return
-	else countTry = math.min(fitCount, req.required, math.max(math.floor((req.lastTried or 1) * 1.5), math.ceil(craftingSpeed))) end
-	req.lastTried = countTry
-
+	else countTry = math.min(fitCount, req.required, math.max(math.floor(req.expInput), math.ceil(craftingSpeed))) end
+	
 	-- Drop if machine is already occupied by higher rank.
 	local previousRecipe = schedule[machineName]
 	if previousRecipe and recipe.rank > previousRecipe.rank then return end
@@ -225,6 +225,9 @@ local function markMachine(machineName, info, req, schedule, ctlgFuture)
 
 	-- Mark scheduled
 	req.required = req.required - actualScheduled
+
+	-- Increase exponential input criteria
+	req.expInput = req.expInput * 1.5
 end
 
 local function makeCraftSchedule(req, schedule, ctlgFuture)
