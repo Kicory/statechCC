@@ -117,12 +117,42 @@ function Helper.makeMultipliedIO(io, factor)
 	return ret
 end
 
-function Helper.makeIDListOver(materials, templates)
+--- Create long, flatten list of ItemIDs, by combination of "materials" and "templates".
+---@param materials table material list
+---@param templates table template list (mark place to substitute with material name by '%m')
+---@param itemIdIndex table full ItemID table.
+---@return table 
+--- The length of returning table(list) is always same: #materials * #templates (no nil value).
+--- If there is no item, then the place is marked with "false".
+function Helper.makeIDListOver(materials, templates, itemIdIndex)
 	local ret = {}
 	for _, m in ipairs(materials) do
 		for _, t in ipairs(templates) do
-			ret[#ret + 1] = string.gsub(t, "%%m", m)
+			-- Give boolean "false" if item ID is not exist
+			ret[#ret + 1] = itemIdIndex[string.gsub(t, "%%m", m)] or false
 		end
+	end
+	return ret
+end
+
+function Helper.divideCtlg(ctlg1, ctlg2)
+	local result = nil
+	for id, amt in pairs(ctlg2 or {}) do
+		local singleResult = math.floor((ctlg1[id] or 0) / amt)
+		result = math.min(result or singleResult, singleResult)
+	end
+	result = result or 0
+
+	return result
+end
+
+function Helper.IO2Catalogue(IO)
+	local ret = {}
+	for itemID, count in pairs(IO.item or {}) do
+		ret[itemID] = count
+	end
+	for fluidID, amt in pairs(IO.fluid or {}) do
+		ret[fluidID] = amt
 	end
 	return ret
 end

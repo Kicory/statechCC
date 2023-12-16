@@ -138,11 +138,8 @@ function St.tryUse(ctlg, toUse, limit)
 	result = math.min(limit, result)
 
 	if result ~= 0 then
-		for itemID, amt in pairs(toUse.item or {}) do
-			ctlg[itemID] = ctlg[itemID] - (amt * result)
-		end
-		for fluidID, amt in pairs(toUse.fluid or {}) do
-			ctlg[fluidID] = ctlg[fluidID] - (amt * result)
+		for id, amt in pairs(Helper.IO2Catalogue(Helper.makeMultipliedIO(toUse, result))) do
+			ctlg[id] = ctlg[id] - amt
 		end
 	end
 	
@@ -150,22 +147,17 @@ function St.tryUse(ctlg, toUse, limit)
 end
 -----------------------------------
 function St.getRequirements(wholeRecipes, goals)
-	local potentialCtlg = calcCtlg(catalogue, craftingCtlg, add, 0)
-	local factorySizeFactor = 3
-	local resultRecipes = {}
-	local requiredUnits = {}
+	local requiredCtlg = calcCtlg(goals, calcCtlg(catalogue, craftingCtlg, add, 0), sub, 0)
 	local craftRequirements = {}
 
 	local function getRequiredUnit(recipe)
 		local output = recipe.unitOutput
 		local requiredUnit = 0
 		for itemID, count in pairs(output.item or {}) do
-			local balance = potentialCtlg[itemID] - (goals[itemID] or 0)
-			requiredUnit = math.max(requiredUnit, math.ceil((-balance) / count))
+			requiredUnit = math.max(requiredUnit, math.ceil(requiredCtlg[itemID] / count))
 		end
 		for fluidID, amt in pairs(output.fluid or {}) do
-			local balance = potentialCtlg[fluidID] - (goals[fluidID] or 0)
-			requiredUnit = math.max(requiredUnit, math.ceil((-balance) / amt))
+			requiredUnit = math.max(requiredUnit, math.ceil(requiredCtlg[fluidID] / amt))
 		end
 		return requiredUnit
 	end
@@ -225,7 +217,7 @@ function St.printStatusToMonitor(goals, moni)
 		end
 	end
 	for id, _ in pairs(lacks) do
-		local name = DispName[id] or id
+		local name = DispName[id] or Helper.dispNameMaker(id)
 		toPrint[#toPrint + 1] = {name, "Lacks", "Lacks", "Lacks"}
 	end
 
@@ -235,7 +227,7 @@ function St.printStatusToMonitor(goals, moni)
 	moni.clear()
 	moni.setCursorPos(1, 1)
 
-	Helper.printRowOf(widRatios, {colors.black}, {colors.lightBlue}, {"Name/ID", "Goal", "Balance", "Crafting..."}, moni)
+	Helper.printRowOf(widRatios, {colors.black}, {colors.lightBlue}, {"Name/ID", "Goal", "Balance", "Crafting"}, moni)
 	for idx, row in ipairs(toPrint) do
 		Helper.printRowOf(widRatios, backColors[(idx % 2) + 1], textColors[(idx % 2) + 1], row, moni)
 	end

@@ -189,9 +189,13 @@ local function canCraftNow(machineInfo, recipe)
 	return minPow and (empty or fits)
 end
 
-local function markMachine(machineName, info, req, schedule, ctlgFuture)
+local function markMachine(machineName, info, req, readiness, states)
+	local resultSchedule = states.resultSchedule
+	local afterFeedCtlg = states.afterFeedCtlg
+	local expectedOutputCtlg = states.expectedOutputCtlg
+
 	local recipe = req.recipe
-	local isEmpty, fitCount, minPowOk, craftingSpeed = getMachineReadiness(info, recipe)
+	local isEmpty, fitCount, minPowOk, craftingSpeed = table.unpack(readiness)
 	
 	-- No requirements (This happens when other machines already took all requirements...)
 	if req.required == 0 then return end
@@ -206,17 +210,20 @@ local function markMachine(machineName, info, req, schedule, ctlgFuture)
 	else countTry = math.min(fitCount, req.required, math.max(math.floor(req.expInput), math.ceil(craftingSpeed))) end
 	
 	-- Drop if machine is already occupied by higher rank.
-	local previousRecipe = schedule[machineName]
+	local previousRecipe = resultSchedule[machineName]
 	if previousRecipe and recipe.rank > previousRecipe.rank then return end
 
 	-- Calculate actual craftable unit count
-	local actualScheduled = St.tryUse(ctlgFuture, recipe.unitInput, countTry)
+	local actualScheduled = St.tryUse(afterFeedCtlg, recipe.unitInput, countTry)
 	if actualScheduled == 0 then return end
 
+	local inputScheduled = Helper.makeMultipliedIO(recipe.unitInput, actualScheduled)
+	local outputScheduled = Helper.makeMultipliedIO(recipe.unitOutput, actualScheduled)
+
 	-- Do schedule
-	schedule[machineName] = {
-		unitInput = Helper.makeMultipliedIO(recipe.unitInput, actualScheduled),		-- Basic information
-		unitOutput = Helper.makeMultipliedIO(recipe.unitOutput, actualScheduled),	-- For tracking output catalogue
+	resultSchedule[machineName] = {
+		unitInput = inputScheduled,			-- Basic information
+		unitOutput = outputScheduled,		-- For tracking output catalogue
 		rank = recipe.rank,					-- for preemption
 		dispName = recipe.dispName,			-- for debug
 		itemInput = info.itemInput,			-- Multiblock machine only
@@ -226,19 +233,45 @@ local function markMachine(machineName, info, req, schedule, ctlgFuture)
 	-- Mark scheduled
 	req.required = req.required - actualScheduled
 
+	-- Add result to expectedOutputCtlg
+	for id, amt in pairs(Helper.IO2Catalogue(outputScheduled)) do
+		expectedOutputCtlg[id] = (expectedOutputCtlg[id] or 0) + amt
+	end
+
 	-- Increase exponential input criteria
 	req.expInput = req.expInput * 1.5
 end
 
-local function makeCraftSchedule(req, schedule, ctlgFuture)
-	local markers = {}
+local function makeCraftSchedule(req, states)
+	local machineReadinessList = {}
+	local readinessReporters = {}
+	local function reportReadiness(machineName, info, recipe)
+		local isEmpty, fitCount, minPowOk, craftingSpeed = getMachineReadiness(info, req.recipe)
+		-- List of four values
+		machineReadinessList[machineName] = {isEmpty, fitCount, minPowOk, craftingSpeed}
+	end
 	for _, machineType in ipairs(req.recipe.machineTypes) do
 		for _, machineName in ipairs(machineNames[machineType]) do
-			markers[#markers + 1] = function() markMachine(machineName, machineList[machineType][machineName], req, schedule, ctlgFuture) end
+			readinessReporters[#readinessReporters + 1] = function() reportReadiness(machineName, machineList[machineType][machineName], req.recipe) end
 		end
 	end
+	-- Get all machine readinesses before actual scheduling.
+	parallel.waitForAll(table.unpack(readinessReporters))
 
-	parallel.waitForAll(table.unpack(markers))
+
+	-- From here, every scheduling is "sequential."
+	local alreadyScheduledCtlg = states.expectedOutputCtlg
+
+	-- Other recipe already fullfilled the requirements of production
+	local recipeOutput = req.recipe.unitOutput
+	local globalRequiredFullfilled = Helper.divideCtlg(alreadyScheduledCtlg, Helper.IO2Catalogue(recipeOutput))
+	req.required = math.max(req.required - globalRequiredFullfilled, 0)
+
+	for _, machineType in ipairs(req.recipe.machineTypes) do
+		for _, machineName in ipairs(machineNames[machineType]) do
+			markMachine(machineName, machineList[machineType][machineName], req, machineReadinessList[machineName], states)
+		end
+	end
 end
 --------------------------------------------
 function M.refreshMachines()
@@ -295,13 +328,19 @@ end
 
 ---@param recipesList table Recipes to check fit in
 ---@return table
-function M.makeFactoryCraftSchedule(craftReqs, ctlgFuture)
-	assert(ctlgFuture ~= nil)
+function M.makeFactoryCraftSchedule(craftReqs, afterFeedCtlg)
+	assert(afterFeedCtlg ~= nil)
 
 	local resultSchedule = {}
+	local expectedOutputCtlg = {}
+	local states = {
+		resultSchedule = resultSchedule,
+		afterFeedCtlg = afterFeedCtlg,
+		expectedOutputCtlg = expectedOutputCtlg,
+	}
 	local scheduleMakers = {}
 	for _, req in ipairs(craftReqs) do
-		scheduleMakers[#scheduleMakers + 1] = function() makeCraftSchedule(req, resultSchedule, ctlgFuture) end
+		scheduleMakers[#scheduleMakers + 1] = function() makeCraftSchedule(req, states) end
 	end
 
 	St.clearLackingMaterialsSet()

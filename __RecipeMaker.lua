@@ -48,7 +48,46 @@ function Recipes:getMaterialsUsedEmptyCtlg()
 	return ret
 end
 
-function Recipes:makeCompressorRecipes(...)
+--- Make basic compressor recipes. [ingot ID, double ingot ID, plate ID, curved plate ID, rod ID, ring ID]. Give "false" if there is no corresponding item.
+function Recipes:makeCompressorRecipesBasic(...)
+	local ps = table.pack(...)
+	local function addOne(inputID, outputID, outputCnt, dispNamePostfix)
+		if inputID and outputID then
+			self:new {
+				dispName = Helper.dispNameMaker(outputID) .. dispNamePostfix,
+				unitInput = {
+					item = {
+						[inputID] = 1
+					}
+				},
+				unitOutput = {
+					item = {
+						[outputID] = outputCnt
+					}
+				},
+				machineTypes = {
+					Machine.electric_compressor
+				},
+				minimumPower = 2
+			}
+		end
+	end
+	for idx = 1, #ps, 6 do
+		local ingotID = ps[idx]
+		local doubleIngotID = ps[idx + 1]
+		local plateID = ps[idx + 2]
+		local curvedPlateID = ps[idx + 3]
+		local rodID = ps[idx + 4]
+		local ringID = ps[idx + 5]
+		addOne(doubleIngotID, plateID, 2, " from Double Ingot")
+		addOne(ingotID, plateID, 1, "")
+		addOne(plateID, curvedPlateID, 1, "")
+		addOne(rodID, ringID, 1, "")
+	end
+end
+
+--- Make other compressor recipes. [inputID, outputID, output amount, minimum energy]. Give "false" if there is no corresponding item.
+function Recipes:makeCompressorRecipesCustom(...)
 	local ps = table.pack(...)
 	for idx = 1, #ps, 2 do
 		local fromID = ps[idx]
@@ -73,7 +112,7 @@ function Recipes:makeCompressorRecipes(...)
 	end
 end
 
---- Make rod recipes. [single Ingot ID, double ingot ID (if there's no double ingot, give nil), rod ID]
+--- Make rod recipes. [single Ingot ID, double ingot ID (if there's no double ingot, give false or nil; anything evaluated to 'false'), rod ID]
 function Recipes:makeCutterRodRecipes(...)
 	local ps = table.pack(...)
 	for idx = 1, #ps, 3 do
@@ -252,7 +291,7 @@ function Recipes:makeAssemRotorRecipes(...)
 	end
 end
 
---- Make wiremill recipes. [plate ID, wire ID, fineWire ID (if there is no finewire, input nil)]
+--- Make wiremill recipes. [plate ID, wire ID, fineWire ID (if there is no finewire, give false or nil; anything evaluated to 'false')]
 function Recipes:makeWiremillRecipes(...)
 	local ps = table.pack(...)
 	for idx = 1, #ps, 3 do
