@@ -242,6 +242,7 @@ local function markMachine(machineName, info, req, readiness, states)
 	req.expInput = req.expInput * 1.5
 end
 
+local listm = {}
 local function makeCraftSchedule(req, states)
 	local machineReadinessList = {}
 	local readinessReporters = {}
@@ -252,12 +253,12 @@ local function makeCraftSchedule(req, states)
 	end
 	for _, machineType in ipairs(req.recipe.machineTypes) do
 		for _, machineName in ipairs(machineNames[machineType]) do
+			readinessReporters[#readinessReporters + 1] = function() M.harvestToBufferSingle(machineType, machineName, St.bufferAE) end
 			readinessReporters[#readinessReporters + 1] = function() reportReadiness(machineName, machineList[machineType][machineName], req.recipe) end
 		end
 	end
 	-- Get all machine readinesses before actual scheduling.
 	parallel.waitForAll(table.unpack(readinessReporters))
-
 
 	-- From here, every scheduling is "sequential."
 	local alreadyScheduledCtlg = states.expectedOutputCtlg
@@ -340,7 +341,8 @@ function M.makeFactoryCraftSchedule(craftReqs, afterFeedCtlg)
 	}
 	local scheduleMakers = {}
 	for _, req in ipairs(craftReqs) do
-		scheduleMakers[#scheduleMakers + 1] = function() makeCraftSchedule(req, states) end
+		makeCraftSchedule(req, states)
+		-- scheduleMakers[#scheduleMakers + 1] = function() makeCraftSchedule(req, states) end
 	end
 
 	St.clearLackingMaterialsSet()
@@ -390,6 +392,37 @@ function M.getProperFluidHatches(craftSchedule)
 end
 ----------------------------------------------
 --- Harvest from machines and save to buffer AE system.
+function M.harvestToBufferSingle(machineType, machineName, bufferAE)
+	local pullItem = bufferAE.pullItem
+	local function pullEveryItem(storageName, machineType)
+		TH.doMany(function() pullItem(storageName) end, Property.OutputItemSlotCount[machineType])
+	end
+	local pullFluid = bufferAE.pullFluid
+	local function pullEveryFluid(tankName, machineType)
+		TH.doMany(function() pullFluid(tankName) end, Property.OutputFluidSlotCount[machineType])
+	end
+	local bufferPullers = {}
+	local info = machineList[machineType][machineName]
+	if info.singleBlockMachineName then
+		if info.hasItem then
+			bufferPullers[#bufferPullers + 1] = function() pullEveryItem(machineName, machineType) end
+		end
+		if info.hasFluid then
+			bufferPullers[#bufferPullers + 1] = function() pullEveryFluid(machineName, machineType) end
+		end
+	else
+		if info.hasItem then
+			-- Output slots of "Highly Advanced Item Output Hatch" is 15.
+			bufferPullers[#bufferPullers + 1] = function() TH.doMany(function() pullItem(info.itemOutput) end, 15) end
+		end
+		if info.hasFluid then
+			-- Fluid hatchs always have one tank, so it's OK...
+			bufferPullers[#bufferPullers + 1] = function() TH.checkPredicate(pullFluid, table.unpack(info.fluidOutputs)) end
+		end
+	end
+	parallel.waitForAll(table.unpack(bufferPullers))
+end
+
 function M.harvestToBuffer(bufferAE)
 	local pullItem = bufferAE.pullItem
 	local function pullEveryItem(storageName, machineType)

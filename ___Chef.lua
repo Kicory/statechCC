@@ -26,9 +26,8 @@ function Chef.step()
 
 	local craftRequirements = St.getRequirements(Recipes, Goals)
 
-	local factoryScd = TH.checkAll(
-		function() M.harvestToBuffer(St.bufferAE) end,
-		function() return M.makeFactoryCraftSchedule(craftRequirements, St.getCatalogueCopy()) end)[2]
+	M.harvestToBuffer(St.bufferAE)
+	local factoryScd = M.makeFactoryCraftSchedule(craftRequirements, St.getCatalogueCopy())
 
 	os.sleep(0.01)	-- 1 tick for AE system to prepare.
 
@@ -58,5 +57,7 @@ end
 Chef.init()
 
 while true do
+	local cur = os.clock()
 	Chef.step()
+	print(Helper.tickFrom(cur) .. " ticks for previous step.")
 end
