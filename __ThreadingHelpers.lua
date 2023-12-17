@@ -62,3 +62,5 @@ function TH.doMany(toRepeat, repeatCount)
     end
     parallel.waitForAll(table.unpack(functions))
 end
+
+return TH

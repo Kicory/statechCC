@@ -1,7 +1,7 @@
 require("MachineProperties")
 require("MultiblockMachines")
-require("__ThreadingHelpers")
-require("__Helpers")
+local TH = require("__ThreadingHelpers")
+local Helper = require("__Helpers")
 
 --[[
 MachineList scheme:
@@ -54,57 +54,27 @@ M = {}
 
 local machineList = nil
 local machineNames = nil
+local recipeBatch = 999
+local machineBatch = 15
 --------------------------------------------
-local function checkStorageEmpty(hatchName)
-	return (next(peripheral.call(hatchName, "items")) == nil)
-end
-
-local function checkTankEmpty(tankName)
-	local tankIsEmpty = true
-	for _, tank in pairs(peripheral.call(tankName, "tanks")) do
-		tankIsEmpty = tankIsEmpty and (tank.name == Fluid.empty)
-	end
-	return tankIsEmpty
-end
-
-local function checkTanksEmpty(hatchNames)
-	return TH.allAnd(TH.checkPredicate(checkTankEmpty, table.unpack(hatchNames)))
-end
-
 --- Returns true if the machine is empty.
 ---@param info any
 ---@return boolean the machine is completely empty.
-local function isEmptyMachine(info)
-
-	local predicates = {}
-	if (info.singleBlockMachineName ~= nil) then
-		-- Single block machine case
-		local machineName = info.singleBlockMachineName
-		if (info.hasItem) then
-			predicates[#predicates + 1] = function() return checkStorageEmpty(machineName) end
+local function isEmptyMachine(storageInfo, tankInfo)
+	local ret = true
+	if storageInfo then
+		ret = ret and (next(storageInfo) == nil)
+	end
+	if tankInfo then
+		for _, ti in ipairs(tankInfo) do
+			ret = ret and ti.name == Fluid.empty
 		end
-		if (info.hasFluid) then
-			predicates[#predicates + 1] = function() return checkTankEmpty(machineName) end
-		end
-		return TH.allAnd(TH.checkAll(table.unpack(predicates)))
 	end
-
-	-- Multi-block machine case (can have multiple hatches)
-	if (info.hasItem) then
-		predicates[#predicates + 1] = function() return checkStorageEmpty(info.itemInput) end
-		predicates[#predicates + 1] = function() return checkStorageEmpty(info.itemOutput) end
-	end
-	if (info.hasFluid) then
-		predicates[#predicates + 1] = function() return checkTanksEmpty(info.fluidInputs) end
-		predicates[#predicates + 1] = function() return checkTanksEmpty(info.fluidOutputs) end
-	end
-
-	return TH.allAnd(TH.checkAll(table.unpack(predicates)))
+	return ret
 end
 --------------------------------------------
-local function itemFitsCount(storageName, itemID, amt)
-	local curItems = peripheral.call(storageName, "items")
-	for _, slot in pairs(curItems) do
+local function itemFitsCount(storageInfo, itemID, amt)
+	for _, slot in pairs(storageInfo) do
 		if itemID == slot.name then
 			return math.floor((slot.maxCount - slot.count) / amt)
 		end
@@ -112,72 +82,76 @@ local function itemFitsCount(storageName, itemID, amt)
 	return 0
 end
 
-local function fluidFitsTankCount(tankName, fluidID, amt)
-	local tanks = peripheral.call(tankName, "tanks")
-	for _, tank in pairs(tanks) do
+local function fluidFitsTankCount(tankInfo, fluidID, amt)
+	for _, tank in pairs(tankInfo) do
 		if fluidID == tank.name then
 			return math.floor((tank.capacity - tank.amount) / amt)
 		end
 	end
 	return 0
 end
-
-local function fluidFitCount(hatchNames, fluidID, amt)
-	local fitCounts = {}
-	for _, hatchName in ipairs(hatchNames) do
-		fitCounts[#fitCounts + 1] = function() return fluidFitsTankCount(hatchName) end
-	end
-	return TH.allMin(TH.checkAll(table.unpack(fitCounts)))
-end
-
 --- Returns true if the machine can accept unit input of recipe.
 ---@param recipe table Recipe to check
 ---@param info table machineInfo
 ---@return boolean
-local function unitInputFitCount(recipe, info)
-	local unitInput = recipe.unitInput
-	local fitCounts = {}
+local function unitInputFitCount(unitInput, storageInfo, tankInfo)
+	local fitCounts = nil
 
-	if (info.singleBlockMachineName ~= nil) then
-		-- Singleblock machine case
-		local name = info.singleBlockMachineName
-		for itemID, amt in pairs(unitInput.item or {}) do
-			fitCounts[#fitCounts + 1] = function() return itemFitsCount(name, itemID, amt) end
-		end
-		for fluidID, amt in pairs(unitInput.fluid or {}) do
-			fitCounts[#fitCounts + 1] = function() return fluidFitsTankCount(name, fluidID, amt) end
-		end
-	else
-		-- Multiblock machine case
-		for itemID, amt in pairs(unitInput.item or {}) do
-			fitCounts[#fitCounts + 1] = function() return itemFitsCount(info.itemInput, itemID, amt) end
-		end
-		for fluidID, amt in pairs(unitInput.fluid or {}) do
-			fitCounts[#fitCounts + 1] = function() return fluidFitCount(info.fluidInputs, fluidID, amt) end
-		end
+	for itemID, amt in pairs(unitInput.item or {}) do
+		local thisFit = itemFitsCount(storageInfo, itemID, amt)
+		fitCounts = math.min(fitCounts or thisFit, thisFit)
 	end
-
-	return TH.allMin(TH.checkAll(table.unpack(fitCounts)))
+	for fluidID, amt in pairs(unitInput.fluid or {}) do
+		local thisFit = fluidFitsTankCount(tankInfo, fluidID, amt)
+		fitCounts = math.min(fitCounts or thisFit, thisFit)
+	end
+	return fitCounts or 0
 end
 --------------------------------------------
-local function getCraftingSpeed(info)
-	local ci = info.wrapped.getCraftingInformation()
-	local base = ci.baseRecipeCost
-	local curr = ci.currentRecipeCost
-	if base ~= nil and curr ~= nil then
-		return curr / base
-	else
-		return 1
-	end
-end
+
 
 local function getMachineReadiness(machineInfo, recipe)
-	local empty, fitUnits, minPowOk, craftSp = table.unpack(TH.checkAll(
-		function() return isEmptyMachine(machineInfo) end,
-		function() return unitInputFitCount(recipe, machineInfo) end,
-		function() return recipe.machineFilter(machineInfo) end,
-		function() return getCraftingSpeed(machineInfo) end
-	))
+	local storageInfo, tankInfo, craftingInfo
+	local function getSpaceInfo()
+		if machineInfo.singleBlockMachineName then
+			if machineInfo.hasItem then
+				storageInfo = machineInfo.wrapped.items()
+			end
+			if machineInfo.hasFluid then
+				tankInfo = machineInfo.wrapped.tanks()
+			end
+		else
+			if machineInfo.hasItem then
+				storageInfo = peripheral.call(machineInfo.itemInput, "items")
+			end
+			if machineInfo.hasFluid then
+				tankInfo = {}
+				TH.checkPredicate(function(tn) tankInfo[#tankInfo + 1] = peripheral.call(tn, "tanks")[1] end, table.unpack(machineInfo.fluidInputs))
+			end
+		end
+	end
+
+	local function getMachineCraftingInfo()
+		craftingInfo = machineInfo.wrapped.getCraftingInformation()
+	end
+
+	local function getCraftingSpeed(ci)
+		local base = ci.baseRecipeCost
+		local curr = ci.currentRecipeCost
+		if base ~= nil and curr ~= nil then
+			return curr / base
+		else
+			return 1
+		end
+	end
+	
+	parallel.waitForAll(getSpaceInfo, getMachineCraftingInfo)
+
+	local empty = isEmptyMachine(storageInfo, tankInfo)
+	local fitUnits = unitInputFitCount(recipe.unitInput, storageInfo, tankInfo)
+	local minPowOk = craftingInfo.maxRecipeCost >= recipe.minimumPower
+	local craftSp = getCraftingSpeed(craftingInfo)
+	
 	return empty, fitUnits, minPowOk, craftSp
 end
 
@@ -242,7 +216,6 @@ local function markMachine(machineName, info, req, readiness, states)
 	req.expInput = req.expInput * 1.5
 end
 
-local listm = {}
 local function makeCraftSchedule(req, states)
 	local machineReadinessList = {}
 	local readinessReporters = {}
@@ -258,7 +231,9 @@ local function makeCraftSchedule(req, states)
 		end
 	end
 	-- Get all machine readinesses before actual scheduling.
-	parallel.waitForAll(table.unpack(readinessReporters))
+	for idx = 1, #readinessReporters, machineBatch do
+		parallel.waitForAll(table.unpack(readinessReporters, idx, math.min(#readinessReporters, idx + machineBatch - 1)))
+	end
 
 	-- From here, every scheduling is "sequential."
 	local alreadyScheduledCtlg = states.expectedOutputCtlg
@@ -331,6 +306,7 @@ end
 ---@return table
 function M.makeFactoryCraftSchedule(craftReqs, afterFeedCtlg)
 	assert(afterFeedCtlg ~= nil)
+	St.clearLackingMaterialsSet()
 
 	local resultSchedule = {}
 	local expectedOutputCtlg = {}
@@ -339,14 +315,14 @@ function M.makeFactoryCraftSchedule(craftReqs, afterFeedCtlg)
 		afterFeedCtlg = afterFeedCtlg,
 		expectedOutputCtlg = expectedOutputCtlg,
 	}
+
 	local scheduleMakers = {}
 	for _, req in ipairs(craftReqs) do
-		makeCraftSchedule(req, states)
-		-- scheduleMakers[#scheduleMakers + 1] = function() makeCraftSchedule(req, states) end
+		scheduleMakers[#scheduleMakers + 1] = function() makeCraftSchedule(req, states) end
 	end
-
-	St.clearLackingMaterialsSet()
-	parallel.waitForAll(table.unpack(scheduleMakers))
+	for idx = 1, #scheduleMakers, recipeBatch do
+		parallel.waitForAll(table.unpack(scheduleMakers, idx, math.min(#scheduleMakers, idx + recipeBatch - 1)))
+	end
 
 	return resultSchedule
 end
@@ -365,28 +341,25 @@ function M.getProperFluidHatches(craftSchedule)
 		}
 	end
 
-	funcs[#funcs + 1] = function()
-		if checkTanksEmpty(hatches) then
-			-- Wherever fluid goes.
-			local hatchIdx = 1
-			for fluidID, amt in pairs(fluids) do
-				fitResult[hatches[hatchIdx]] = makeFeedFluidInfo(fluidID, amt)
-				hatchIdx = hatchIdx + 1
-			end
+	local tankInfo
+	TH.checkPredicate(function(tn) tankInfo[#tankInfo + 1] = peripheral.call(tn, "tanks")[1] end, table.unpack(hatches))
+
+	if isEmptyMachine(nil, tankInfo) then
+		-- Wherever fluid goes.
+		local hatchIdx = 1
+		for fluidID, amt in pairs(fluids) do
+			fitResult[hatches[hatchIdx]] = makeFeedFluidInfo(fluidID, amt)
+			hatchIdx = hatchIdx + 1
 		end
 	end
 
 	for fluidID, amt in pairs(fluids) do
 		for _, hatch in ipairs(hatches) do
-			funcs[#funcs + 1] = function()
-				if fluidFitsTankCount(hatch, fluidID, amt) then
-					fitResult[hatch] = makeFeedFluidInfo(fluidID, amt)
-				end
+			if fluidFitsTankCount(tankInfo, fluidID, amt) > 0 then
+				fitResult[hatch] = makeFeedFluidInfo(fluidID, amt)
 			end
 		end
 	end
-
-	parallel.waitForAll(table.unpack(funcs))
 
 	return fitResult
 end

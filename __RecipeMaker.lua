@@ -25,7 +25,7 @@ function Recipes:new(specs)
 		unitInput = specs.unitInput,
 		unitOutput = specs.unitOutput,
 		machineTypes = specs.machineTypes,
-		machineFilter = basePowerChecker(specs.minimumPower),
+		minimumPower = specs.minimumPower,
 	}
 end
 

@@ -53,8 +53,10 @@ function Chef.step()
 	end
 end
 
-
+print("Initializing...")
+local cur = os.clock()
 Chef.init()
+print("Initializing took " .. Helper.tickFrom(cur) .. " ticks")
 
 while true do
 	local cur = os.clock()

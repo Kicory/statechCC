@@ -156,3 +156,5 @@ function Helper.IO2Catalogue(IO)
 	end
 	return ret
 end
+
+return Helper
