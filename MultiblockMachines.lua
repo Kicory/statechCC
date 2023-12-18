@@ -20,14 +20,14 @@ BigMachines = {
 			isBusy = nil, -- will filled by __Machines.refreshMachines
 		}
 	},
-	--[[
-		[MultiblockMachine.chemicalReactorLarge] = {
-	 	["modern_industrialization:large_chemical_reactor_1"] = {
+	--
+	[MultiblockMachine.chemicalReactorLarge] = {
+	 	["modern_industrialization:large_chemical_reactor_2"] = {
 	 		hasFluid = true,
 	 		fluidInputs = {
-	 			"modern_industrialization:turbo_fluid_input_hatch_4",
-	 			"modern_industrialization:turbo_fluid_input_hatch_4",
-	 			"modern_industrialization:turbo_fluid_input_hatch_6",
+	 			"modern_industrialization:highly_advanced_fluid_input_hatch_1",
+	 			"modern_industrialization:highly_advanced_fluid_input_hatch_2",
+	 			"modern_industrialization:highly_advanced_fluid_input_hatch_3",
 	 		},
 	 		fluidOutputs = {
 	 			"modern_industrialization:advanced_fluid_output_hatch_0",

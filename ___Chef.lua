@@ -10,7 +10,7 @@ Chef = {}
 local moni
 
 function Chef.init()
-	M.refreshMachines()
+	M.init()
 	St.init()
 	moni = peripheral.find("monitor")
 end
@@ -26,7 +26,7 @@ function Chef.step()
 
 	local craftRequirements = St.getRequirements(Recipes, Goals)
 
-	M.harvestToBuffer(St.bufferAE)
+	M.harvestToBufferSlow(St.bufferAE)
 	local factoryScd = M.makeFactoryCraftSchedule(craftRequirements, St.getCatalogueCopy())
 
 	os.sleep(0.01)	-- 1 tick for AE system to prepare.
@@ -45,7 +45,7 @@ function Chef.step()
 		end
 		while rs.getInput("left") do
 			os.sleep(0.1)
-			M.harvestToBuffer(St.bufferAE)
+			M.harvestToBufferSlow(St.bufferAE)
 			os.sleep(0.01)
 			-- Pulling back outputs from factory should not stop
 			St.applyHarvestedCatalogue(M.harvestFromBuffer(St.bufferAE, St.BufferStorages, St.BufferTanks, St.mainAE))

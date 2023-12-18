@@ -11,15 +11,16 @@ local bw = peripheral.wrap(b)
 local pullItem = aew.pullItem
 
 local limit = 257
+local curLim = 0
 
 local function pullEveryItem()
     pullItem(st)
 end
 function getItems()
-    return stw.items()
+    stw.items()
 end
 function getItemsb()
-    return bw.list()
+    return peripheral.call(b, "list")
 end
 function getSize()
     return bw.size()
@@ -32,7 +33,7 @@ while true do
     local cur = os.clock()
     -- TH.doMany(getItems, limit)
     -- TH.doMany(pullEveryItem, limit)
-    parallel.waitForAll(function() TH.doMany(getItemsb, 256) end, function() TH.doMany(getSize, 1) end)
+    parallel.waitForAll(function() TH.doMany(getItemsb, 257) end, function() TH.doMany(getSize, 0) end)
     TH.doMany(getItemsb, 257)
     -- pullEveryItem(st)
     print(Helper.tickFrom(cur))

@@ -19,4 +19,6 @@ Goals = {
 	[Item.bronze_gear] = 20,
 	[Item.bronze_blade] = 200,
 	[Item.bronze_rotor] = 10,
+
+	-- [Fluid.raw_biodiesel] = 24000,
 }

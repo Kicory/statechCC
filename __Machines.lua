@@ -54,8 +54,77 @@ M = {}
 
 local machineList = nil
 local machineNames = nil
-local recipeBatch = 999
-local machineBatch = 15
+local factoryStatus = nil
+local paraCostLimit = 257
+--------------------------------------------
+local function refreshMachines()
+	local machineTypes = {}
+	for _, v in pairs(Machine) do
+		machineTypes[#machineTypes + 1] = v
+	end
+
+	machineList = {}
+	machineNames = {}
+	factoryStatus = {}
+
+	local function registerMachine(machineType, machineName, machineWrapped)
+		local machineInfo = {
+			wrapped = machineWrapped,
+		}
+
+		machineInfo.hasFluid = peripheral.hasType(machineName, PpType.fluidStorage)
+		machineInfo.hasItem = peripheral.hasType(machineName, PpType.itemStorage)
+
+		if (peripheral.hasType(machineName, PpType.miCrafter)) then
+			machineInfo.getBasePower = function() return machineWrapped.getCraftingInformation().maxRecipeCost end
+			machineInfo.isBusy = machineWrapped.isBusy
+		end
+		-- Multi-block machines do not have this field
+		machineInfo.singleBlockMachineName = machineName
+
+		machineList[machineType][machineName] = machineInfo
+		table.insert(machineNames[machineType], machineName)
+
+		-- return for filter
+		return false
+	end
+
+	-- Find peripherals
+	for _, machineType in pairs(machineTypes) do
+		machineList[machineType] = {}
+		machineNames[machineType] = {}
+		peripheral.find(machineType, function(machineName, machineWrapped) registerMachine(machineType, machineName, machineWrapped) end)
+	end
+
+	-- Add multiblock machines manually
+	for machineType, bigMachines in pairs(BigMachines) do
+		machineList[machineType] = {}
+		machineNames[machineType] = {}
+		for machineName, machineInfo in pairs(bigMachines) do
+			machineInfo.wrapped = peripheral.wrap(machineName)
+			machineInfo.getBasePower = function() return machineInfo.wrapped.getCraftingInformation().maxRecipeCost end
+			machineInfo.isBusy = machineInfo.wrapped.isBusy
+			machineList[machineType][machineName] = machineInfo
+			table.insert(machineNames[machineType], machineName)
+		end
+	end
+
+	-- Create empty factoryStatus
+	for t, ms in pairs(machineList) do
+		for mn, info in pairs(ms) do
+			factoryStatus[mn] = {
+				type = t,
+				storageInfo = nil,
+				tankInfo = nil,
+				craftingInfo = nil,
+			}
+		end
+	end
+end
+
+function M.init()
+	refreshMachines()
+end
 --------------------------------------------
 --- Returns true if the machine is empty.
 ---@param info any
@@ -94,82 +163,47 @@ end
 ---@param recipe table Recipe to check
 ---@param info table machineInfo
 ---@return boolean
-local function unitInputFitCount(unitInput, storageInfo, tankInfo)
+local function inputFitCount(input, storageInfo, tankInfo)
 	local fitCounts = nil
 
-	for itemID, amt in pairs(unitInput.item or {}) do
+	for itemID, amt in pairs(input.item or {}) do
 		local thisFit = itemFitsCount(storageInfo, itemID, amt)
 		fitCounts = math.min(fitCounts or thisFit, thisFit)
 	end
-	for fluidID, amt in pairs(unitInput.fluid or {}) do
+	for fluidID, amt in pairs(input.fluid or {}) do
 		local thisFit = fluidFitsTankCount(tankInfo, fluidID, amt)
 		fitCounts = math.min(fitCounts or thisFit, thisFit)
 	end
 	return fitCounts or 0
 end
 --------------------------------------------
-
-
-local function getMachineReadiness(machineInfo, recipe)
-	local storageInfo, tankInfo, craftingInfo
-	local function getSpaceInfo()
-		if machineInfo.singleBlockMachineName then
-			if machineInfo.hasItem then
-				storageInfo = machineInfo.wrapped.items()
-			end
-			if machineInfo.hasFluid then
-				tankInfo = machineInfo.wrapped.tanks()
-			end
-		else
-			if machineInfo.hasItem then
-				storageInfo = peripheral.call(machineInfo.itemInput, "items")
-			end
-			if machineInfo.hasFluid then
-				tankInfo = {}
-				TH.checkPredicate(function(tn) tankInfo[#tankInfo + 1] = peripheral.call(tn, "tanks")[1] end, table.unpack(machineInfo.fluidInputs))
-			end
-		end
-	end
-
-	local function getMachineCraftingInfo()
-		craftingInfo = machineInfo.wrapped.getCraftingInformation()
-	end
+local function getMachineReadiness(machineName, recipe)
+	local storageInfo = factoryStatus[machineName].storageInfo
+	local tankInfo = factoryStatus[machineName].tankInfo
+	local craftingInfo = factoryStatus[machineName].craftingInfo
 
 	local function getCraftingSpeed(ci)
 		local base = ci.baseRecipeCost
 		local curr = ci.currentRecipeCost
-		if base ~= nil and curr ~= nil then
-			return curr / base
-		else
-			return 1
-		end
+		if base ~= nil and curr ~= nil then return curr / base
+		else return 1 end
 	end
-	
-	parallel.waitForAll(getSpaceInfo, getMachineCraftingInfo)
 
 	local empty = isEmptyMachine(storageInfo, tankInfo)
-	local fitUnits = unitInputFitCount(recipe.unitInput, storageInfo, tankInfo)
+	local fitUnits = inputFitCount(recipe.unitInput, storageInfo, tankInfo)
 	local minPowOk = craftingInfo.maxRecipeCost >= recipe.minimumPower
 	local craftSp = getCraftingSpeed(craftingInfo)
 	
 	return empty, fitUnits, minPowOk, craftSp
 end
 
-local function canCraftNow(machineInfo, recipe)
-	local empty, fits, minPow = table.unpack(TH.checkAll(
-		function() return isEmptyMachine(machineInfo) end,
-		function() return unitInputFitCount(recipe, machineInfo) end,
-		function() return recipe.machineFilter(machineInfo) end))
-	return minPow and (empty or fits)
-end
-
-local function markMachine(machineName, info, req, readiness, states)
+local function markMachine(machineName, info, req, states)
 	local resultSchedule = states.resultSchedule
 	local afterFeedCtlg = states.afterFeedCtlg
 	local expectedOutputCtlg = states.expectedOutputCtlg
 
 	local recipe = req.recipe
-	local isEmpty, fitCount, minPowOk, craftingSpeed = table.unpack(readiness)
+	local isEmpty, fitCount, minPowOk, craftingSpeed = getMachineReadiness(machineName, recipe)
 	
 	-- No requirements (This happens when other machines already took all requirements...)
 	if req.required == 0 then return end
@@ -217,215 +251,188 @@ local function markMachine(machineName, info, req, readiness, states)
 end
 
 local function makeCraftSchedule(req, states)
-	local machineReadinessList = {}
-	local readinessReporters = {}
-	local function reportReadiness(machineName, info, recipe)
-		local isEmpty, fitCount, minPowOk, craftingSpeed = getMachineReadiness(info, req.recipe)
-		-- List of four values
-		machineReadinessList[machineName] = {isEmpty, fitCount, minPowOk, craftingSpeed}
-	end
-	for _, machineType in ipairs(req.recipe.machineTypes) do
-		for _, machineName in ipairs(machineNames[machineType]) do
-			readinessReporters[#readinessReporters + 1] = function() M.harvestToBufferSingle(machineType, machineName, St.bufferAE) end
-			readinessReporters[#readinessReporters + 1] = function() reportReadiness(machineName, machineList[machineType][machineName], req.recipe) end
-		end
-	end
-	-- Get all machine readinesses before actual scheduling.
-	for idx = 1, #readinessReporters, machineBatch do
-		parallel.waitForAll(table.unpack(readinessReporters, idx, math.min(#readinessReporters, idx + machineBatch - 1)))
-	end
-
-	-- From here, every scheduling is "sequential."
-	local alreadyScheduledCtlg = states.expectedOutputCtlg
-
 	-- Other recipe already fullfilled the requirements of production
 	local recipeOutput = req.recipe.unitOutput
+	local alreadyScheduledCtlg = states.expectedOutputCtlg
 	local globalRequiredFullfilled = Helper.divideCtlg(alreadyScheduledCtlg, Helper.IO2Catalogue(recipeOutput))
 	req.required = math.max(req.required - globalRequiredFullfilled, 0)
 
-	for _, machineType in ipairs(req.recipe.machineTypes) do
-		for _, machineName in ipairs(machineNames[machineType]) do
-			markMachine(machineName, machineList[machineType][machineName], req, machineReadinessList[machineName], states)
+	for _, mt in ipairs(req.recipe.machineTypes) do
+		for _, mn in ipairs(machineNames[mt]) do
+			markMachine(mn, machineList[mt][mn], req, states)
 		end
 	end
 end
 --------------------------------------------
-function M.refreshMachines()
-	local machineTypes = {}
-	for _, v in pairs(Machine) do
-		machineTypes[#machineTypes + 1] = v
-	end
-
-	machineList = {}
-	machineNames = {}
-
-	local function registerMachine(machineType, machineName, machineWrapped)
-		local machineInfo = {
-			wrapped = machineWrapped,
-		}
-
-		machineInfo.hasFluid = peripheral.hasType(machineName, PpType.fluidStorage)
-		machineInfo.hasItem = peripheral.hasType(machineName, PpType.itemStorage)
-
-		if (peripheral.hasType(machineName, PpType.miCrafter)) then
-			machineInfo.getBasePower = function() return machineWrapped.getCraftingInformation().maxRecipeCost end
-			machineInfo.isBusy = machineWrapped.isBusy
+local function prepareFactoryStatus()
+	-- Make large info [storageInfo, tankInfo, craftingInfo] table for every machine.
+	-- All parallel-consuming tasks will be here.
+	local function getStorageInfo(info)
+		local storageInfo = nil
+		if info.singleBlockMachineName then
+			if info.hasItem then
+				storageInfo = info.wrapped.items()
+			end
+		elseif info.hasItem then
+			-- Multiblock
+			storageInfo = peripheral.call(info.itemInput, "items")
 		end
-		-- Multi-block machines do not have this field
-		machineInfo.singleBlockMachineName = machineName
-
-		machineList[machineType][machineName] = machineInfo
-		table.insert(machineNames[machineType], machineName)
-
-		-- return for filter
-		return false
+		return storageInfo
+	end
+	local function getTankInfo(info)
+		local tankInfo = nil
+		if info.singleBlockMachineName then
+			if info.hasFluid then
+				tankInfo = info.wrapped.tanks()
+			end
+		else
+			if info.hasFluid then
+				tankInfo = {}
+				TH.paraForNoResults(function(idx, tn) tankInfo[idx] = peripheral.call(tn, "tanks")[1] end, ipairs(info.fluidInputs))
+			end
+		end
+		return tankInfo
+	end
+	local function getMachineCraftingInfo(info)
+		return info.wrapped.getCraftingInformation()
+	end
+	local function paraCost(info, totalPullCnts)
+		local ret = 0
+		if info.singleBlockMachineName then
+			if info.hasItem then ret = ret + 1 end
+			if info.hasFluid then ret = ret + 1 end
+			ret = ret + 1
+		else
+			if info.hasItem then ret = ret + 1 end
+			if info.hasFluid then ret = ret + #info.fluidInputs end
+			ret = ret + 1
+		end
+		return ret
+	end
+	local function harvestToBufferSingleMachine(machineName, info, itemPuller, itemPullCnt, fluidPuller, fluidPullCnt)
+		local function pullEveryItem(storageName)
+			TH.doMany(function() itemPuller(storageName) end, itemPullCnt)
+		end
+		local function pullEveryFluid(tankName)
+			TH.doMany(function() fluidPuller(tankName) end, fluidPullCnt)
+		end
+		local bufferPullers = {}
+		if info.singleBlockMachineName then
+			if info.hasItem then
+				bufferPullers[#bufferPullers + 1] = function() pullEveryItem(machineName) end
+			end
+			if info.hasFluid then
+				bufferPullers[#bufferPullers + 1] = function() pullEveryFluid(machineName) end
+			end
+		else
+			-- No pull from multiblock machine (input and output is separated in multiblock machines...)
+		end
+		parallel.waitForAll(table.unpack(bufferPullers))
 	end
 
-	-- Find peripherals
-	for _, machineType in pairs(machineTypes) do
-		machineList[machineType] = {}
-		machineNames[machineType] = {}
-		peripheral.find(machineType, function(machineName, machineWrapped) registerMachine(machineType, machineName, machineWrapped) end)
-	end
+	local statusGetters = {}
+	local accParaCost = 0
+	local itemPuller = St.bufferAE.pullItem
+	local fluidPuller = St.bufferAE.pullFluid
+	for mt, machines in pairs(machineList) do
+		local itemPullCnt = Property.OutputItemSlotCount[mt] or 0
+		local fluidPullCnt = Property.OutputFluidSlotCount[mt] or 0
 
-	-- Add multiblock machines manually
-	for machineType, bigMachines in pairs(BigMachines) do
-		machineList[machineType] = {}
-		machineNames[machineType] = {}
-		for machineName, machineInfo in pairs(bigMachines) do
-			machineInfo.wrapped = peripheral.wrap(machineName)
-			machineInfo.getBasePower = function() return machineInfo.wrapped.getCraftingInformation().maxRecipeCost end
-			machineInfo.isBusy = machineInfo.wrapped.isBusy
-			machineList[machineType][machineName] = machineInfo
-			table.insert(machineNames[machineType], machineName)
+		for mn, info in pairs(machines) do
+			local thisParaCost = paraCost(info, itemPullCnt + fluidPullCnt)
+			if (accParaCost + thisParaCost) > paraCostLimit then
+				parallel.waitForAll(table.unpack(statusGetters))
+				statusGetters = {}
+				accParaCost = 0
+			end
+
+			factoryStatus[mn].type = mt
+			statusGetters[#statusGetters + 1] = function()
+				parallel.waitForAll(
+					function() harvestToBufferSingleMachine(mn, info, itemPuller, itemPullCnt, fluidPuller, fluidPullCnt) end,
+					function() factoryStatus[mn].storageInfo = getStorageInfo(info) end,
+					function() factoryStatus[mn].tankInfo = getTankInfo(info) end,
+					function() factoryStatus[mn].craftingInfo = getMachineCraftingInfo(info) end
+				)
+			end
+			accParaCost = accParaCost + thisParaCost
 		end
 	end
+	parallel.waitForAll(table.unpack(statusGetters))
 end
-
+--------------------------------------------
 ---@param recipesList table Recipes to check fit in
 ---@return table
 function M.makeFactoryCraftSchedule(craftReqs, afterFeedCtlg)
 	assert(afterFeedCtlg ~= nil)
 	St.clearLackingMaterialsSet()
-
+	
 	local resultSchedule = {}
 	local expectedOutputCtlg = {}
+	
+	prepareFactoryStatus()	-- Consumes paraCount
+	
 	local states = {
 		resultSchedule = resultSchedule,
 		afterFeedCtlg = afterFeedCtlg,
 		expectedOutputCtlg = expectedOutputCtlg,
 	}
 
-	local scheduleMakers = {}
 	for _, req in ipairs(craftReqs) do
-		scheduleMakers[#scheduleMakers + 1] = function() makeCraftSchedule(req, states) end
+		makeCraftSchedule(req, states)
 	end
-	for idx = 1, #scheduleMakers, recipeBatch do
-		parallel.waitForAll(table.unpack(scheduleMakers, idx, math.min(#scheduleMakers, idx + recipeBatch - 1)))
-	end
-
+	
 	return resultSchedule
 end
---------------------------------------------
-function M.getProperFluidHatches(craftSchedule)
-	assert(craftSchedule.fluidInputs ~= nil, "This is only for multiblock machines")
-	local hatches = craftSchedule.fluidInputs or {}
-	local fluids = craftSchedule.unitInput.fluid or {}
-	local funcs = {}
-	local fitResult = {}
-
-	local function makeFeedFluidInfo(fluidID, amt)
-		return {
-			fluidID = fluidID,
-			amt = amt,
-		}
-	end
-
-	local tankInfo
-	TH.checkPredicate(function(tn) tankInfo[#tankInfo + 1] = peripheral.call(tn, "tanks")[1] end, table.unpack(hatches))
-
-	if isEmptyMachine(nil, tankInfo) then
-		-- Wherever fluid goes.
-		local hatchIdx = 1
-		for fluidID, amt in pairs(fluids) do
-			fitResult[hatches[hatchIdx]] = makeFeedFluidInfo(fluidID, amt)
-			hatchIdx = hatchIdx + 1
-		end
-	end
-
-	for fluidID, amt in pairs(fluids) do
-		for _, hatch in ipairs(hatches) do
-			if fluidFitsTankCount(tankInfo, fluidID, amt) > 0 then
-				fitResult[hatch] = makeFeedFluidInfo(fluidID, amt)
-			end
-		end
-	end
-
-	return fitResult
-end
 ----------------------------------------------
---- Harvest from machines and save to buffer AE system.
-function M.harvestToBufferSingle(machineType, machineName, bufferAE)
-	local pullItem = bufferAE.pullItem
-	local function pullEveryItem(storageName, machineType)
-		TH.doMany(function() pullItem(storageName) end, Property.OutputItemSlotCount[machineType])
+--- Do one 'pullFluid' and one 'pullItem' on each machine, including multiblock machines
+--- This is for pulling leftover products 'slowly', as scheduler only 'pulls' when the machine has thing to craft.
+--- Obeys 'paraCostLimit'.
+---@param bufferAE table
+function M.harvestToBufferSlow()
+	
+	local function paraCost(info)
+		local ret = 0
+		if info.singleBlockMachineName then
+			if info.hasItem then ret = ret + 1 end
+			if info.hasFluid then ret = ret + 1 end
+		else
+			if info.hasItem then ret = ret + 1 end
+			if info.hasFluid then ret = ret + #info.fluidOutputs end
+		end
+		return ret
 	end
-	local pullFluid = bufferAE.pullFluid
-	local function pullEveryFluid(tankName, machineType)
-		TH.doMany(function() pullFluid(tankName) end, Property.OutputFluidSlotCount[machineType])
-	end
+	
 	local bufferPullers = {}
-	local info = machineList[machineType][machineName]
-	if info.singleBlockMachineName then
-		if info.hasItem then
-			bufferPullers[#bufferPullers + 1] = function() pullEveryItem(machineName, machineType) end
-		end
-		if info.hasFluid then
-			bufferPullers[#bufferPullers + 1] = function() pullEveryFluid(machineName, machineType) end
-		end
-	else
-		if info.hasItem then
-			-- Output slots of "Highly Advanced Item Output Hatch" is 15.
-			bufferPullers[#bufferPullers + 1] = function() TH.doMany(function() pullItem(info.itemOutput) end, 15) end
-		end
-		if info.hasFluid then
-			-- Fluid hatchs always have one tank, so it's OK...
-			bufferPullers[#bufferPullers + 1] = function() TH.checkPredicate(pullFluid, table.unpack(info.fluidOutputs)) end
-		end
-	end
-	parallel.waitForAll(table.unpack(bufferPullers))
-end
+	local accParaCost = 0
+	local pullItem = St.bufferAE.pullItem
+	local pullFluid = St.bufferAE.pullFluid
+	for mt, ml in pairs(machineList) do
+		for mn, info in pairs(ml) do
+			local thisParaCost = paraCost(info)
+			if (accParaCost + thisParaCost) > paraCostLimit then
+				parallel.waitForAll(table.unpack(bufferPullers))
+				bufferPullers = {}
+				accParaCost = 0
+			end
 
-function M.harvestToBuffer(bufferAE)
-	local pullItem = bufferAE.pullItem
-	local function pullEveryItem(storageName, machineType)
-		TH.doMany(function() pullItem(storageName) end, Property.OutputItemSlotCount[machineType])
-	end
-	local pullFluid = bufferAE.pullFluid
-	local function pullEveryFluid(tankName, machineType)
-		TH.doMany(function() pullFluid(tankName) end, Property.OutputFluidSlotCount[machineType])
-	end
-	local bufferPullers = {}
-
-	for machineType, machines in pairs(machineList) do
-		for name, info in pairs(machines) do
 			if info.singleBlockMachineName then
 				if info.hasItem then
-					bufferPullers[#bufferPullers + 1] = function() pullEveryItem(name, machineType) end
+					bufferPullers[#bufferPullers + 1] = function() pullItem(mn) end
 				end
 				if info.hasFluid then
-					bufferPullers[#bufferPullers + 1] = function() pullEveryFluid(name, machineType) end
+					bufferPullers[#bufferPullers + 1] = function() pullFluid(mn) end
 				end
 			else
 				if info.hasItem then
-					-- Output slots of "Highly Advanced Item Output Hatch" is 15.
-					bufferPullers[#bufferPullers + 1] = function() TH.doMany(function() pullItem(info.itemOutput) end, 15) end
+					bufferPullers[#bufferPullers + 1] = function() pullItem(info.itemOutput) end
 				end
 				if info.hasFluid then
-					-- Fluid hatchs always have one tank, so it's OK...
-					bufferPullers[#bufferPullers + 1] = function() TH.checkPredicate(pullFluid, table.unpack(info.fluidOutputs)) end
+					bufferPullers[#bufferPullers + 1] = function() TH.paraForNoResults(function(_, hatchName) pullFluid(hatchName) end, ipairs(info.fluidOutputs)) end
 				end
 			end
+
+			accParaCost = accParaCost + thisParaCost
 		end
 	end
 	parallel.waitForAll(table.unpack(bufferPullers))
@@ -442,7 +449,7 @@ function M.harvestFromBuffer(bufferAE, bufferStorages, bufferTanks, mainAE)
 
 	local harvestedItems
 	local harvestedTanks
-	harvestedItems, harvestedTanks = table.unpack(TH.checkAll(bufferAE.items, bufferAE.tanks))
+	harvestedItems, harvestedTanks = table.unpack(TH.paraDoAll(bufferAE.items, bufferAE.tanks))
 
 	for _, item in ipairs(harvestedItems) do
 		harvestedCtlg[item.technicalName] = item.count
@@ -490,45 +497,73 @@ function M.feedFactory(scd, fromAE)
 	end
 	local function feedFluid(tankName, fluidID, limit)
 		local fedAmt = fromAE.pushFluid(tankName, limit, fluidID)
-		assert(fedAmt == limit)
+		assert(fedAmt == limit, tankName .. " -- " .. fluidID .. " should fed: " .. limit .. ", actual: " .. fedAmt)
 		fedCtlg[fluidID] = (fedCtlg[fluidID] or 0) + fedAmt
 	end
+	local function getConsistantFluidHatchMatches(fluidCtlg, hatchList)
+		local fluidIDList = {}
+		for k in pairs(fluidCtlg) do
+			fluidIDList[#fluidIDList + 1] = k
+		end
+		table.sort(fluidIDList)
+		local hatchMatches = {}
+		for idx, hatch in ipairs(hatchList) do
+			local idToFeed = fluidIDList[idx]
+			hatchMatches[hatch] = {
+				fluidID = idToFeed,
+				amt = fluidCtlg[idToFeed]
+			}
+		end
+		return hatchMatches
+	end
+	local function paraCost(inputCtlg)
+		local inputIDs = {}
+		for k in pairs(inputCtlg) do
+			inputIDs[#inputIDs + 1] = k
+		end
+		return #inputIDs
+	end
 
-	local function feedMachine(name, craftScd)
+	local accParaCost = 0
+	local feedJobs = {}
+	for name, craftScd in pairs(scd) do
+		local thisParaCost = paraCost(Helper.IO2Catalogue(craftScd.unitInput))
+		if (accParaCost + thisParaCost) > paraCostLimit then
+			parallel.waitForAll(table.unpack(feedJobs))
+			feedJobs = {}
+			accParaCost = 0
+		end
+
+		-- Item feeding
 		local itemTarget = craftScd.itemInput or name
-		local singleFeedJobs = {}
 		for itemID, count in pairs(craftScd.unitInput.item or {}) do
-			singleFeedJobs[#singleFeedJobs + 1] = function() feedItem(itemTarget, itemID, count) end
+			feedJobs[#feedJobs + 1] = function() feedItem(itemTarget, itemID, count) end
 		end
 		
-		if craftScd.fluidInputs == nil then
+		-- Fluid feeding
+		if not craftScd.fluidInputs then
 			-- Singleblock machine
 			for fluidID, amt in pairs(craftScd.unitInput.fluid or {}) do
-				singleFeedJobs[#singleFeedJobs + 1] = function() feedFluid(name, fluidID, amt) end
+				feedJobs[#feedJobs + 1] = function() feedFluid(name, fluidID, amt) end
 			end
 		else
 			-- Multiblock machine
-			local hatchMatches = M.getProperFluidHatches(craftScd) --> 1 tick
+			local hatchMatches = getConsistantFluidHatchMatches(craftScd.unitInput.fluid, craftScd.fluidInputs)
 			for hatch, fluidFeedInfo in pairs(hatchMatches) do
-				singleFeedJobs[#singleFeedJobs + 1] = function() feedFluid(hatch, fluidFeedInfo.fluidID, fluidFeedInfo.amt) end
+				feedJobs[#feedJobs + 1] = function() feedFluid(hatch, fluidFeedInfo.fluidID, fluidFeedInfo.amt) end
 			end
 		end
 	
-		for itemID, count in pairs(craftScd.unitOutput.item or {}) do
-			expectedOutputCtlg[itemID] = (expectedOutputCtlg[itemID] or 0) + count
+		-- Counting
+		for itemID, amt in pairs(Helper.IO2Catalogue(craftScd.unitOutput)) do
+			expectedOutputCtlg[itemID] = (expectedOutputCtlg[itemID] or 0) + amt
 		end
-		for fluidID, amt in pairs(craftScd.unitOutput.fluid or {}) do
-			expectedOutputCtlg[fluidID] = (expectedOutputCtlg[fluidID] or 0) + amt
-		end
-		parallel.waitForAll(table.unpack(singleFeedJobs))
-	end
 
-	local feedJobs = {}
-	for name, craftScd in pairs(scd) do
-		feedJobs[#feedJobs + 1] = function() feedMachine(name, craftScd) end
+		-- Increament paraCost
+		accParaCost = accParaCost + thisParaCost
 	end
+	parallel.waitForAll(table.unpack(feedJobs))
 
-	parallel.waitForAll(table.unpack(feedJobs)) --> 1 tick
 	return {
 		fed = fedCtlg, 
 		expected = expectedOutputCtlg
@@ -545,11 +580,9 @@ end
 ---@return table Catalogue of all fed materials
 ---@return table Catalogue of expected outputs
 function M.moveMaterials(factoryScd, bufferAE, bufferStorages, bufferTanks, mainAE)
-	local harvestedCtlg, feedResult
-	harvestedCtlg, feedResult = table.unpack(TH.checkAll(
-		function() return M.harvestFromBuffer(bufferAE, bufferStorages, bufferTanks, mainAE) end,
-		function() return M.feedFactory(factoryScd, mainAE) end
-	))
+	local harvestedCtlg = M.harvestFromBuffer(bufferAE, bufferStorages, bufferTanks, mainAE)
+	local feedResult = M.feedFactory(factoryScd, mainAE)
+
 	local fedCtlg = feedResult.fed
 	local expectedCtlg = feedResult.expected
 	return harvestedCtlg, fedCtlg, expectedCtlg

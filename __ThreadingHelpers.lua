@@ -1,19 +1,25 @@
 
 TH = {}
 
---- Check all in parallel
----@param predicate function return boolean, argument is following (each)
-function TH.checkPredicate(predicate, ...)
-    local functions = {}
-    local results = {}
-    for k, toCheck in ipairs(table.pack(...)) do
-        functions[k] = function() results[k] = predicate(toCheck) end
+function TH.paraForNoResults(consumer, ...)
+    local todos = {}
+    for k, v in ... do
+        todos[#todos + 1] = function() consumer(k, v) end
     end
-    parallel.waitForAll(table.unpack(functions))
+    parallel.waitForAll(table.unpack(todos))
+end
+
+function TH.paraFor(consumer, ...)
+    local todos = {}
+    local results = {}
+    for k, v in ... do
+        todos[#todos + 1] = function() results[k] = consumer(k, v) end
+    end
+    parallel.waitForAll(table.unpack(todos))
     return results
 end
 
-function TH.checkAll(...)
+function TH.paraDoAll(...)
     local functions = {}
     local results = {}
     for k, toCheck in ipairs(table.pack(...)) do
