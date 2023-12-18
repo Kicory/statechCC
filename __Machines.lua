@@ -58,9 +58,9 @@ local factoryStatus = nil
 local paraCostLimit = 257
 --------------------------------------------
 local function refreshMachines()
-	local machineTypes = {}
+	local singleBlockMachineTypes = {}
 	for _, v in pairs(Machine) do
-		machineTypes[#machineTypes + 1] = v
+		singleBlockMachineTypes[#singleBlockMachineTypes + 1] = v
 	end
 
 	machineList = {}
@@ -68,21 +68,21 @@ local function refreshMachines()
 	factoryStatus = {}
 
 	local function registerMachine(machineType, machineName, machineWrapped)
-		local machineInfo = {
+		local info = {
 			wrapped = machineWrapped,
 		}
 
-		machineInfo.hasFluid = peripheral.hasType(machineName, PpType.fluidStorage)
-		machineInfo.hasItem = peripheral.hasType(machineName, PpType.itemStorage)
+		info.hasFluid = peripheral.hasType(machineName, PpType.fluidStorage)
+		info.hasItem = peripheral.hasType(machineName, PpType.itemStorage)
 
 		if (peripheral.hasType(machineName, PpType.miCrafter)) then
-			machineInfo.getBasePower = function() return machineWrapped.getCraftingInformation().maxRecipeCost end
-			machineInfo.isBusy = machineWrapped.isBusy
+			info.getBasePower = function() return machineWrapped.getCraftingInformation().maxRecipeCost end
+			info.isBusy = machineWrapped.isBusy
 		end
 		-- Multi-block machines do not have this field
-		machineInfo.singleBlockMachineName = machineName
+		info.singleBlockMachineName = machineName
 
-		machineList[machineType][machineName] = machineInfo
+		machineList[machineType][machineName] = info
 		table.insert(machineNames[machineType], machineName)
 
 		-- return for filter
@@ -90,21 +90,21 @@ local function refreshMachines()
 	end
 
 	-- Find peripherals
-	for _, machineType in pairs(machineTypes) do
+	for _, machineType in pairs(singleBlockMachineTypes) do
 		machineList[machineType] = {}
 		machineNames[machineType] = {}
 		peripheral.find(machineType, function(machineName, machineWrapped) registerMachine(machineType, machineName, machineWrapped) end)
 	end
 
 	-- Add multiblock machines manually
-	for machineType, bigMachines in pairs(BigMachines) do
+	for machineType, bigMachinesOfType in pairs(BigMachines) do
 		machineList[machineType] = {}
 		machineNames[machineType] = {}
-		for machineName, machineInfo in pairs(bigMachines) do
-			machineInfo.wrapped = peripheral.wrap(machineName)
-			machineInfo.getBasePower = function() return machineInfo.wrapped.getCraftingInformation().maxRecipeCost end
-			machineInfo.isBusy = machineInfo.wrapped.isBusy
-			machineList[machineType][machineName] = machineInfo
+		for machineName, info in pairs(bigMachinesOfType) do
+			info.wrapped = peripheral.wrap(machineName)
+			info.getBasePower = function() return info.wrapped.getCraftingInformation().maxRecipeCost end
+			info.isBusy = info.wrapped.isBusy
+			machineList[machineType][machineName] = info
 			table.insert(machineNames[machineType], machineName)
 		end
 	end
@@ -120,10 +120,6 @@ local function refreshMachines()
 			}
 		end
 	end
-end
-
-function M.init()
-	refreshMachines()
 end
 --------------------------------------------
 --- Returns true if the machine is empty.
@@ -361,11 +357,14 @@ local function prepareFactoryStatus()
 	parallel.waitForAll(table.unpack(statusGetters))
 end
 --------------------------------------------
+function M.init()
+	refreshMachines()
+end
+--------------------------------------------
 ---@param recipesList table Recipes to check fit in
 ---@return table
 function M.makeFactoryCraftSchedule(craftReqs, afterFeedCtlg)
 	assert(afterFeedCtlg ~= nil)
-	St.clearLackingMaterialsSet()
 	
 	local resultSchedule = {}
 	local expectedOutputCtlg = {}

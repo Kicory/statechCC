@@ -1,11 +1,14 @@
 require("Dict")
-require("__Helpers")
+local Helper = require("__Helpers")
 
 local function basePowerChecker(basePowerRequired)
 	return function (machineInfo) return machineInfo.getBasePower() >= basePowerRequired end
 end
 
 Recipes = {}
+
+local consumables = {}
+local craftables = {}
 
 function Recipes:new(specs)
 	if (not specs.dispName) or (type(specs.dispName) ~= "string") then error("Recipe Display Name not specified!") return end
@@ -27,6 +30,13 @@ function Recipes:new(specs)
 		machineTypes = specs.machineTypes,
 		minimumPower = specs.minimumPower,
 	}
+
+	for id in pairs(Helper.IO2Catalogue(specs.unitInput)) do
+		consumables[id] = true
+	end
+	for id in pairs(Helper.IO2Catalogue(specs.unitOutput)) do
+		craftables[id] = true
+	end
 end
 
 function Recipes:getMaterialsUsedEmptyCtlg()
@@ -46,6 +56,10 @@ function Recipes:getMaterialsUsedEmptyCtlg()
 		end
 	end
 	return ret
+end
+
+function Recipes.isCraftable(id)
+	return (craftables[id] ~= nil)
 end
 
 --- Make basic compressor recipes. [ingot ID, double ingot ID, plate ID, curved plate ID, rod ID, ring ID]. Give "false" if there is no corresponding item.

@@ -14,7 +14,6 @@ local emptyCtlg = {}
 -- Whole item data
 local catalogue = {}
 local craftingCtlg = {}
-local lackingMaterialsSet = {}
 
 local function findStorageSystems()
 	St.bufferAE = peripheral.wrap(StorageSystems.buffer)
@@ -101,12 +100,6 @@ function St.getCatalogueCopy()
 	return copy
 end
 
-function St.clearLackingMaterialsSet()
-	for k, _ in pairs(lackingMaterialsSet) do
-		lackingMaterialsSet[k] = nil
-	end
-end
-
 --- Try consume material from catalogue given.
 ---@param ctlg table
 ---@param toUse table Materials to use, in unitInput format
@@ -116,24 +109,13 @@ function St.tryUse(ctlg, toUse, limit)
 	assert(limit ~= nil and limit > 0)
 
 	local result = nil
-	local enough
 	for itemID, amt in pairs(toUse.item or {}) do
 		local cnt =  math.floor(ctlg[itemID] / amt)
 		result = math.min(result or cnt, cnt)
-
-		enough = cnt > limit
-		if not enough then
-			lackingMaterialsSet[itemID] = true
-		end
 	end
 	for fluidID, amt in pairs(toUse.fluid or {}) do
 		local cnt = math.floor(ctlg[fluidID] / amt)
 		result = math.min(result or cnt, cnt)
-
-		enough = cnt > limit
-		if not enough then
-			lackingMaterialsSet[fluidID] = true
-		end
 	end
 	result = math.min(limit, result)
 
@@ -201,11 +183,7 @@ function St.printStatusToMonitor(goals, moni)
 
 	local balanceCtlg = calcCtlg(calcCtlg(catalogue, craftingCtlg, add, 0), goals, sub, 0)
 	local lacks = {}
-	-- Copy lackingMaterialsSet
-	for k, _ in pairs(lackingMaterialsSet) do
-		lacks[k] = true
-	end
-
+	
 	local toPrint = {}
 	for id, bal in pairs(balanceCtlg) do
 		local name = DispName[id] or Helper.dispNameMaker(id)
