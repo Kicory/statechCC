@@ -1,4 +1,5 @@
-Helper = {}
+local Ctlg = require("__Catalouge")
+local Helper = {}
 
 function Helper.serializeTable(val, name, skipnewlines, depth)
 	skipnewlines = skipnewlines or false
@@ -135,19 +136,8 @@ function Helper.makeIDListOver(materials, templates, itemIdIndex)
 	return ret
 end
 
-function Helper.divideCtlg(ctlg1, ctlg2)
-	local result = nil
-	for id, amt in pairs(ctlg2 or {}) do
-		local singleResult = math.floor((ctlg1[id] or 0) / amt)
-		result = math.min(result or singleResult, singleResult)
-	end
-	result = result or 0
-
-	return result
-end
-
 function Helper.IO2Catalogue(IO)
-	local ret = {}
+	local ret = Ctlg:new()
 	for itemID, count in pairs(IO.item or {}) do
 		ret[itemID] = count
 	end

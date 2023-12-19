@@ -1,9 +1,9 @@
 require("Dict")
 require("Recipes")
-require("Goals")
-require("__Machines")
-require("__Storage")
-require("__Helpers")
+local GoalsCtlg = require("Goals")
+local M = require("__Machines")
+local St = require("__Storage")
+local Helper = require("__Helpers")
 
 -- Main program
 Chef = {}
@@ -21,10 +21,10 @@ function Chef.step()
 	local cur = os.clock()
 	
 	if moni then
-		St.printStatusToMonitor(Goals, moni)
+		St.printStatusToMonitor(GoalsCtlg, moni)
 	end
 
-	local craftRequirements = St.getRequirements(Recipes, Goals)
+	local craftRequirements = St.getRequirements(Recipes, GoalsCtlg)
 
 	M.harvestToBufferSlow(St.bufferAE)
 	local factoryScd = M.makeFactoryCraftSchedule(craftRequirements, St.getCatalogueCopy())

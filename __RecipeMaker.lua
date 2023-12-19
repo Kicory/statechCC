@@ -1,5 +1,6 @@
 require("Dict")
 local Helper = require("__Helpers")
+local Ctlg = require("__Catalouge")
 
 local function basePowerChecker(basePowerRequired)
 	return function (machineInfo) return machineInfo.getBasePower() >= basePowerRequired end
@@ -40,7 +41,7 @@ function Recipes:new(specs)
 end
 
 function Recipes:getMaterialsUsedEmptyCtlg()
-	local ret = {}
+	local ret = Ctlg:new()
 	for _, r in ipairs(self) do
 		for id, _ in pairs(r.unitInput.item or {}) do
 			ret[id] = 0

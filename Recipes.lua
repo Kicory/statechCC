@@ -1,4 +1,6 @@
+require("Dict")
 require("__RecipeMaker")
+local Helper = require("__Helpers")
 
 local I = Item
 local M = MatType

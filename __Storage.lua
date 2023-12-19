@@ -1,62 +1,27 @@
 require("Dict")
 require("Enviornment")
-require("__ThreadingHelpers")
-require("__Helpers")
+local TH = require("__ThreadingHelpers")
+local Helper = require("__Helpers")
+local Ctlg = require("__Catalouge")
 
-St = {
+local St = {
 	bufferAE = nil,
 	mainAE = nil,
 	BufferStorages = nil,
 	BufferTanks = nil,
 }
 
-local emptyCtlg = {}
+local emptyCtlg = nil
 -- Whole item data
-local catalogue = {}
-local craftingCtlg = {}
+local catalogue = nil
+
+local craftingCtlg = Ctlg:new()
 
 local function findStorageSystems()
 	St.bufferAE = peripheral.wrap(StorageSystems.buffer)
 	St.mainAE = peripheral.wrap(StorageSystems.main)
 	St.BufferStorages = StorageSystems.BufferStorages
 	St.BufferTanks = StorageSystems.BufferTanks
-end
-
-local function calcCtlg(ctlg1, ctlg2, func, defaultVal)
-	local keyDict = {}
-	local resultCtlg = {}
-	for k, _ in pairs(ctlg1) do
-		keyDict[k] = true
-	end
-	for k, _ in pairs(ctlg2) do
-		keyDict[k] = true
-	end
-	for k, _ in pairs(keyDict) do
-		resultCtlg[k] = func(ctlg1[k] or defaultVal, ctlg2[k] or defaultVal)
-	end
-
-	return resultCtlg
-end
-
-local function add(a, b) return a + b end
-
-local function sub(a, b) return a - b end
-
---- Apply function to every entry, in place. No return.
----@param ctlg table
----@param func function
-local function funcCtlgInplace(ctlg, func)
-	for k, v in pairs(ctlg) do
-		ctlg[k] = func(ctlg[k])
-	end
-end
-
-local function copyEmptyCtlg()
-	local ret = {}
-	for k, _ in pairs(emptyCtlg) do
-		ret[k] = 0
-	end
-	return ret
 end
 
 local function recipeManagerCoroutine(recipe)
@@ -72,7 +37,7 @@ end
 
 function St.refreshCatalogue()
 	assert(St.mainAE ~= nil)
-	catalogue = copyEmptyCtlg()
+	catalogue = emptyCtlg:copy()
 	local function refreshItem()
 		local items = St.mainAE.items()
 		for _, item in ipairs(items) do
@@ -93,11 +58,7 @@ function St.refreshCatalogue()
 end
 
 function St.getCatalogueCopy()
-	local copy = {}
-	for id, amt in pairs(catalogue) do
-		copy[id] = amt
-	end
-	return copy
+	return catalogue:copy()
 end
 
 --- Try consume material from catalogue given.
@@ -120,16 +81,20 @@ function St.tryUse(ctlg, toUse, limit)
 	result = math.min(limit, result)
 
 	if result ~= 0 then
-		for id, amt in pairs(Helper.IO2Catalogue(Helper.makeMultipliedIO(toUse, result))) do
-			ctlg[id] = ctlg[id] - amt
-		end
+		local used = Helper.IO2Catalogue(Helper.makeMultipliedIO(toUse, result))
+		ctlg:inPlaceSub(used, Ctlg.ERROR_ON_NEW_KEY)
+
+		-- for id, amt in pairs(Helper.IO2Catalogue(Helper.makeMultipliedIO(toUse, result))) do
+		-- 	ctlg[id] = ctlg[id] - amt
+		-- end
 	end
 	
 	return result
 end
 -----------------------------------
-function St.getRequirements(wholeRecipes, goals)
-	local requiredCtlg = calcCtlg(goals, calcCtlg(catalogue, craftingCtlg, add, 0), sub, 0)
+function St.getRequirements(wholeRecipes, goalsCtlg)
+	local requiredCtlg = goalsCtlg - (catalogue + craftingCtlg)
+	-- local requiredCtlg = calcCtlg(goalsCtlg, calcCtlg(catalogue, craftingCtlg, add, 0), sub, 0)
 	local craftRequirements = {}
 
 	local function getRequiredUnit(recipe)
@@ -157,13 +122,16 @@ function St.getRequirements(wholeRecipes, goals)
 end
 
 function St.applyHarvestedCatalogue(harvestedCtlg)
-	craftingCtlg = calcCtlg(craftingCtlg, harvestedCtlg, sub, 0)
+	craftingCtlg:inPlaceSub(harvestedCtlg, Ctlg.ALLOW_KEY_CREATION)
+	-- craftingCtlg = calcCtlg(craftingCtlg, harvestedCtlg, sub, 0)
+
 	-- CraftingCtlg cannot be negative; it is bug or leftover harvests from previous session.
-	funcCtlgInplace(craftingCtlg, function(v) return math.max(0, v) end)
+	craftingCtlg:map(function(k, v) return math.max(0, v) end)
 end
 
 function St.applyExpectedCatalogue(expectedCtlg)
-	craftingCtlg = calcCtlg(craftingCtlg, expectedCtlg, add, 0)
+	craftingCtlg:inPlaceAdd(expectedCtlg, Ctlg.ALLOW_KEY_CREATION)
+	-- craftingCtlg = calcCtlg(craftingCtlg, expectedCtlg, add, 0)
 end
 
 -----------------------------------
@@ -175,13 +143,9 @@ function St.printCraftingCtlg()
 	Helper.printPretty(craftingCtlg)
 end
 
-function St.printBlanceCtlg(goals)
-	Helper.printPretty(calcCtlg(calcCtlg(catalogue, craftingCtlg, add, 0), goals, sub, 0))
-end
-
 function St.printStatusToMonitor(goals, moni)
-
-	local balanceCtlg = calcCtlg(calcCtlg(catalogue, craftingCtlg, add, 0), goals, sub, 0)
+	local balanceCtlg = (catalogue + craftingCtlg):inPlaceSub(goals, Ctlg.ALLOW_KEY_CREATION)
+	-- local balanceCtlg = calcCtlg(calcCtlg(catalogue, craftingCtlg, add, 0), goals, sub, 0)
 	local lacks = {}
 	
 	local toPrint = {}
@@ -210,3 +174,5 @@ function St.printStatusToMonitor(goals, moni)
 		Helper.printRowOf(widRatios, backColors[(idx % 2) + 1], textColors[(idx % 2) + 1], row, moni)
 	end
 end
+
+return St

@@ -2,6 +2,8 @@ require("MachineProperties")
 require("MultiblockMachines")
 local TH = require("__ThreadingHelpers")
 local Helper = require("__Helpers")
+local Ctlg = require("__Catalouge")
+local St = require("__Storage")
 
 --[[
 MachineList scheme:
@@ -50,7 +52,7 @@ Factory Schedule example:
 }
 ]]
 
-M = {}
+local M = {}
 
 local machineList = nil
 local machineNames = nil
@@ -238,9 +240,7 @@ local function markMachine(machineName, info, req, states)
 	req.required = req.required - actualScheduled
 
 	-- Add result to expectedOutputCtlg
-	for id, amt in pairs(Helper.IO2Catalogue(outputScheduled)) do
-		expectedOutputCtlg[id] = (expectedOutputCtlg[id] or 0) + amt
-	end
+	expectedOutputCtlg:inPlaceAdd(Helper.IO2Catalogue(outputScheduled), Ctlg.ALLOW_KEY_CREATION)
 
 	-- Increase exponential input criteria
 	req.expInput = req.expInput * 1.5
@@ -250,7 +250,7 @@ local function makeCraftSchedule(req, states)
 	-- Other recipe already fullfilled the requirements of production
 	local recipeOutput = req.recipe.unitOutput
 	local alreadyScheduledCtlg = states.expectedOutputCtlg
-	local globalRequiredFullfilled = Helper.divideCtlg(alreadyScheduledCtlg, Helper.IO2Catalogue(recipeOutput))
+	local globalRequiredFullfilled = alreadyScheduledCtlg / Helper.IO2Catalogue(recipeOutput)
 	req.required = math.max(req.required - globalRequiredFullfilled, 0)
 
 	for _, mt in ipairs(req.recipe.machineTypes) do
@@ -366,8 +366,8 @@ end
 function M.makeFactoryCraftSchedule(craftReqs, afterFeedCtlg)
 	assert(afterFeedCtlg ~= nil)
 	
-	local resultSchedule = {}
-	local expectedOutputCtlg = {}
+	local resultSchedule = Ctlg:new()
+	local expectedOutputCtlg = Ctlg:new()
 	
 	prepareFactoryStatus()	-- Consumes paraCount
 	
@@ -444,7 +444,7 @@ end
 ---@param mainAE table Main AE network
 ---@return table Harvested materials catalogue
 function M.harvestFromBuffer(bufferAE, bufferStorages, bufferTanks, mainAE)
-	local harvestedCtlg = {}
+	local harvestedCtlg = Ctlg:new()
 
 	local harvestedItems
 	local harvestedTanks
@@ -486,8 +486,8 @@ end
 ---@param fromAE table Source of item/fluids
 ---@return table "fed" = Catalogue of all fed materials // "expected" = Catalogue of expected outputs
 function M.feedFactory(scd, fromAE)
-	local fedCtlg = {}
-	local expectedOutputCtlg = {}
+	local fedCtlg = Ctlg:new()
+	local expectedOutputCtlg = Ctlg:new()
 
 	local function feedItem(storageName, itemID, limit)
 		local fedCount = fromAE.pushItem(storageName, itemID, limit)
@@ -554,9 +554,7 @@ function M.feedFactory(scd, fromAE)
 		end
 	
 		-- Counting
-		for itemID, amt in pairs(Helper.IO2Catalogue(craftScd.unitOutput)) do
-			expectedOutputCtlg[itemID] = (expectedOutputCtlg[itemID] or 0) + amt
-		end
+		expectedOutputCtlg:inPlaceAdd(Helper.IO2Catalogue(craftScd.unitOutput), Ctlg.ALLOW_KEY_CREATION)
 
 		-- Increament paraCost
 		accParaCost = accParaCost + thisParaCost
@@ -593,9 +591,4 @@ function M.printMachineList()
 	Helper.printPretty(machineList)
 end
 
-function M.printFactoryCraftSchedule(recipesList, ctlgCopy)
-	local cur = os.clock()
-	local ttt = Helper.serializeTable(M.makeFactoryCraftSchedule(recipesList, ctlgCopy))
-	ttt = ttt .. "\n\n ... This took " .. os.clock() - cur .. " seconds."
-	Helper.printPretty(ttt)
-end
+return M
