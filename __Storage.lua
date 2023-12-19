@@ -69,24 +69,12 @@ end
 function St.tryUse(ctlg, toUse, limit)
 	assert(limit ~= nil and limit > 0)
 
-	local result = nil
-	for itemID, amt in pairs(toUse.item or {}) do
-		local cnt =  math.floor(ctlg[itemID] / amt)
-		result = math.min(result or cnt, cnt)
-	end
-	for fluidID, amt in pairs(toUse.fluid or {}) do
-		local cnt = math.floor(ctlg[fluidID] / amt)
-		result = math.min(result or cnt, cnt)
-	end
+	local result = ctlg / Helper.IO2Catalogue(toUse)
 	result = math.min(limit, result)
 
 	if result ~= 0 then
 		local used = Helper.IO2Catalogue(Helper.makeMultipliedIO(toUse, result))
 		ctlg:inPlaceSub(used, Ctlg.ERROR_ON_NEW_KEY)
-
-		-- for id, amt in pairs(Helper.IO2Catalogue(Helper.makeMultipliedIO(toUse, result))) do
-		-- 	ctlg[id] = ctlg[id] - amt
-		-- end
 	end
 	
 	return result
@@ -94,7 +82,6 @@ end
 -----------------------------------
 function St.getRequirements(wholeRecipes, goalsCtlg)
 	local requiredCtlg = goalsCtlg - (catalogue + craftingCtlg)
-	-- local requiredCtlg = calcCtlg(goalsCtlg, calcCtlg(catalogue, craftingCtlg, add, 0), sub, 0)
 	local craftRequirements = {}
 
 	local function getRequiredUnit(recipe)
@@ -123,7 +110,6 @@ end
 
 function St.applyHarvestedCatalogue(harvestedCtlg)
 	craftingCtlg:inPlaceSub(harvestedCtlg, Ctlg.ALLOW_KEY_CREATION)
-	-- craftingCtlg = calcCtlg(craftingCtlg, harvestedCtlg, sub, 0)
 
 	-- CraftingCtlg cannot be negative; it is bug or leftover harvests from previous session.
 	craftingCtlg:map(function(k, v) return math.max(0, v) end)
@@ -131,7 +117,6 @@ end
 
 function St.applyExpectedCatalogue(expectedCtlg)
 	craftingCtlg:inPlaceAdd(expectedCtlg, Ctlg.ALLOW_KEY_CREATION)
-	-- craftingCtlg = calcCtlg(craftingCtlg, expectedCtlg, add, 0)
 end
 
 -----------------------------------
@@ -145,7 +130,6 @@ end
 
 function St.printStatusToMonitor(goals, moni)
 	local balanceCtlg = (catalogue + craftingCtlg):inPlaceSub(goals, Ctlg.ALLOW_KEY_CREATION)
-	-- local balanceCtlg = calcCtlg(calcCtlg(catalogue, craftingCtlg, add, 0), goals, sub, 0)
 	local lacks = {}
 	
 	local toPrint = {}

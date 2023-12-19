@@ -31,7 +31,9 @@ function Chef.step()
 
 	os.sleep(0.01)	-- 1 tick for AE system to prepare.
 
-	local harvestedCtlg, fedCtlg, expectedCtlg = M.moveMaterials(factoryScd, St.bufferAE, St.BufferStorages, St.BufferTanks, St.mainAE)
+	local harvestedCtlg = M.harvestFromBuffer(St.bufferAE, St.BufferStorages, St.BufferTanks, St.mainAE)
+	
+	local fedCtlg, expectedCtlg = M.feedFactory(factoryScd, St.mainAE)
 	
 	St.applyExpectedCatalogue(expectedCtlg)
 	St.applyHarvestedCatalogue(harvestedCtlg)

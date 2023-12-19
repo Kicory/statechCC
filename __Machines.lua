@@ -243,7 +243,7 @@ local function markMachine(machineName, info, req, states)
 	expectedOutputCtlg:inPlaceAdd(Helper.IO2Catalogue(outputScheduled), Ctlg.ALLOW_KEY_CREATION)
 
 	-- Increase exponential input criteria
-	req.expInput = req.expInput * 1.5
+	req.expInput = req.expInput * 2
 end
 
 local function makeCraftSchedule(req, states)
@@ -380,7 +380,7 @@ function M.makeFactoryCraftSchedule(craftReqs, afterFeedCtlg)
 	for _, req in ipairs(craftReqs) do
 		makeCraftSchedule(req, states)
 	end
-	
+
 	return resultSchedule
 end
 ----------------------------------------------
@@ -437,7 +437,7 @@ function M.harvestToBufferSlow()
 	parallel.waitForAll(table.unpack(bufferPullers))
 end
 
---- Send buffer contents to main AE system. 2 ticks function
+--- Send buffer contents to main AE system. Not obeys paraCostLimit.
 ---@param bufferAE table
 ---@param bufferStorages table List of item storages connected to bufferAE network
 ---@param bufferTanks table list of fluid storages connected to bufferAE network
@@ -481,7 +481,7 @@ function M.harvestFromBuffer(bufferAE, bufferStorages, bufferTanks, mainAE)
 	return harvestedCtlg
 end
 
---- Feed entire factory items and fluids for craft. Can take 1 tick or 2 ticks.
+--- Feed entire factory items and fluids for craft. Obeys paraCostLimit
 ---@param scd table Schedule
 ---@param fromAE table Source of item/fluids
 ---@return table "fed" = Catalogue of all fed materials // "expected" = Catalogue of expected outputs
@@ -561,28 +561,7 @@ function M.feedFactory(scd, fromAE)
 	end
 	parallel.waitForAll(table.unpack(feedJobs))
 
-	return {
-		fed = fedCtlg, 
-		expected = expectedOutputCtlg
-	}
-end
-
---- func desc
----@param factoryScd table Schedule
----@param bufferAE table
----@param bufferStorages table List of item storages connected to bufferAE network
----@param bufferTanks table list of fluid storages connected to bufferAE network
----@param mainAE table Main AE network
----@return table Harvested materials catalogue
----@return table Catalogue of all fed materials
----@return table Catalogue of expected outputs
-function M.moveMaterials(factoryScd, bufferAE, bufferStorages, bufferTanks, mainAE)
-	local harvestedCtlg = M.harvestFromBuffer(bufferAE, bufferStorages, bufferTanks, mainAE)
-	local feedResult = M.feedFactory(factoryScd, mainAE)
-
-	local fedCtlg = feedResult.fed
-	local expectedCtlg = feedResult.expected
-	return harvestedCtlg, fedCtlg, expectedCtlg
+	return fedCtlg, expectedOutputCtlg
 end
 ----------------------------------------------
 ----------------------------------------------
