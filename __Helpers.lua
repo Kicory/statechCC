@@ -83,9 +83,9 @@ function Helper.printRowOf(widthRatios, backColors, textColors, contents, monito
 		monitor.write(string.rep(" ", spaceWid))
 		monitor.setTextColor(colors.white)
 		monitor.setBackgroundColor(colors.black)
-		if idx == 1 then
-			monitor.write("|")
-		end
+		-- if idx == 1 then
+		-- 	monitor.write("|")
+		-- end
 		lastTextCol = textCol
 		lastBackCol = backCol
 	end

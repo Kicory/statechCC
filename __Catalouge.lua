@@ -79,6 +79,23 @@ function Ctlg:map(func)
 	return self
 end
 
+function Ctlg:filter(pred)
+	for k, v in pairs(self) do
+		if not pred(k, v) then
+			self[k] = nil
+		end
+	end
+	return self
+end
+
+function Ctlg:getKeys()
+	local keys = {}
+	for k in pairs(self) do
+		keys[#keys + 1] = k
+	end
+	return keys
+end
+
 function Ctlg:inPlaceFunc(otherCtlg, func, newKeyMode, defaultVal)
 	for k, v in pairs(otherCtlg) do
 		if self[k] then

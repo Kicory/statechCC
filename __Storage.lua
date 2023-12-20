@@ -66,18 +66,22 @@ end
 ---@param toUse table Materials to use, in unitInput format
 ---@param limit integer Maximum units to use.
 ---@return integer count of units successfully used
-function St.tryUse(ctlg, toUse, limit)
+---@return table Catalogue of lacking materials
+function St.tryUse(availableCtlg, toUse, limit)
 	assert(limit ~= nil and limit > 0)
 
-	local result = ctlg / Helper.IO2Catalogue(toUse)
+	local toUseCtlg = Helper.IO2Catalogue(toUse)
+
+	local result = availableCtlg / toUseCtlg
 	result = math.min(limit, result)
+	local lacksCtlg = toUseCtlg:inPlaceSub(availableCtlg, Ctlg.IGNORE_NEW_KEY):filter(function(k, v) return v > 0 end)
 
 	if result ~= 0 then
 		local used = Helper.IO2Catalogue(Helper.makeMultipliedIO(toUse, result))
-		ctlg:inPlaceSub(used, Ctlg.ERROR_ON_NEW_KEY)
+		availableCtlg:inPlaceSub(used, Ctlg.ERROR_ON_NEW_KEY)
 	end
 	
-	return result
+	return result, lacksCtlg
 end
 -----------------------------------
 function St.getRequirements(wholeRecipes, goalsCtlg)
@@ -128,34 +132,57 @@ function St.printCraftingCtlg()
 	Helper.printPretty(craftingCtlg)
 end
 
-function St.printStatusToMonitor(goals, moni)
-	local balanceCtlg = (catalogue + craftingCtlg):inPlaceSub(goals, Ctlg.ALLOW_KEY_CREATION)
-	local lacks = {}
-	
-	local toPrint = {}
-	for id, bal in pairs(balanceCtlg) do
-		local name = DispName[id] or Helper.dispNameMaker(id)
-
-		if bal < 0 then
-			toPrint[#toPrint + 1] = {name, goals[id], bal, craftingCtlg[id] or 0}
-			-- It's already crafting (or at least lackage is reported.)
-			lacks[id] = nil
-		end
-	end
-	for id, _ in pairs(lacks) do
-		local name = DispName[id] or Helper.dispNameMaker(id)
-		toPrint[#toPrint + 1] = {name, "Lacks", "Lacks", "Lacks"}
-	end
-
-	local widRatios = {0.34, 0.22, 0.22, 0.22}
-	local backColors = {{colors.pink, colors.lightBlue}, {colors.pink, colors.lightGray}}
-	local textColors = {{colors.red, colors.black}, {colors.red, colors.black}}
+function St.printStatusToMonitor(goalsCtlg, dpCtlg, lackStatus, machineLackStatus, moni)
 	moni.clear()
 	moni.setCursorPos(1, 1)
+	
+	local backColors = {colors.pink, colors.lightBlue, colors.pink}
+	local textColors = {colors.red, colors.black, colors.red}
 
-	Helper.printRowOf(widRatios, {colors.black}, {colors.lightBlue}, {"Name/ID", "Goal", "Balance", "Crafting"}, moni)
-	for idx, row in ipairs(toPrint) do
-		Helper.printRowOf(widRatios, backColors[(idx % 2) + 1], textColors[(idx % 2) + 1], row, moni)
+	local function getDispName(whatever)
+		if whatever then
+			return DispName[whatever] or Helper.dispNameMaker(whatever)
+		else
+			return '-'
+		end
+	end
+
+	local function printIDList(list)
+		for idx = 1, #list, 3 do
+			local content = {getDispName(list[idx]), getDispName(list[idx + 1]), getDispName(list[idx + 2])}
+			Helper.printRowOf({1/3, 1/3, 1/3}, backColors, textColors, content, moni)
+		end
+	end
+	
+	-- Lack raw material (should increase raw material production)
+	do
+		Helper.printRowOf({1}, {colors.black}, {colors.white}, {"  Lacking Raw Materials"}, moni)
+		local dpLacksList = dpCtlg:copy():filter(function(k, v) return lackStatus[k] == true end):getKeys()
+		printIDList(dpLacksList)
+	end
+
+	-- Lack machine (should enlarge factory)
+	do
+		Helper.printRowOf({1}, {colors.black}, {colors.white}, {"  Lacking Machines"}, moni)
+		local lackingMachineList = {}
+		for k, v in pairs(machineLackStatus) do
+			if v then
+				lackingMachineList[#lackingMachineList + 1] = k
+			end
+		end
+		printIDList(machineLackStatus)
+	end
+
+	-- Lack speed (should increase goal)
+	do
+		Helper.printRowOf({1}, {colors.black}, {colors.white}, {"  Lacking Speed of producing..."}, moni)
+		local lackingSpeedList = {}
+		for k, v in pairs(lackStatus) do
+			if v and craftingCtlg[k] and craftingCtlg[k] >= goalsCtlg[k] * 0.95 then
+				lackingSpeedList[#lackingSpeedList + 1] = k
+			end
+		end
+		printIDList(lackingSpeedList)
 	end
 end
 

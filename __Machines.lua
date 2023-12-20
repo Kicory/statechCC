@@ -214,13 +214,23 @@ local function markMachine(machineName, info, req, states)
 	elseif isEmpty then countTry = 1
 	elseif fitCount == 0 then return
 	else countTry = math.min(fitCount, req.required, math.max(math.floor(req.expInput), math.ceil(craftingSpeed))) end
+
+	-- Mark if there is at least one available machine.
+	req.foundAvailableMachine = true
 	
 	-- Drop if machine is already occupied by higher rank.
 	local previousRecipe = resultSchedule[machineName]
 	if previousRecipe and recipe.rank > previousRecipe.rank then return end
 
 	-- Calculate actual craftable unit count
-	local actualScheduled = St.tryUse(afterFeedCtlg, recipe.unitInput, countTry)
+	local actualScheduled, lacksCtlg = St.tryUse(afterFeedCtlg, recipe.unitInput, countTry)
+	
+	-- Mark lacking materials for report
+	req.lackingCtlg = req.lackingCtlg or Ctlg:new()
+	-- Numbers here does not represent actual lacking amount
+	req.lackingCtlg:inPlaceAdd(lacksCtlg, Ctlg.ALLOW_KEY_CREATION)
+
+	-- Cannot be scheduled, lacks material
 	if actualScheduled == 0 then return end
 
 	local inputScheduled = Helper.makeMultipliedIO(recipe.unitInput, actualScheduled)
@@ -368,6 +378,8 @@ function M.makeFactoryCraftSchedule(craftReqs, afterFeedCtlg)
 	
 	local resultSchedule = Ctlg:new()
 	local expectedOutputCtlg = Ctlg:new()
+	local lackingStatus = {}
+	local machineLackingStatus = {}
 	
 	prepareFactoryStatus()	-- Consumes paraCount
 	
@@ -376,12 +388,15 @@ function M.makeFactoryCraftSchedule(craftReqs, afterFeedCtlg)
 		afterFeedCtlg = afterFeedCtlg,
 		expectedOutputCtlg = expectedOutputCtlg,
 	}
-
+	
 	for _, req in ipairs(craftReqs) do
 		makeCraftSchedule(req, states)
+		for id in pairs(req.lackingCtlg or {}) do
+			lackingStatus[id] = true
+		end
 	end
 
-	return resultSchedule
+	return resultSchedule, lackingStatus, machineLackingStatus
 end
 ----------------------------------------------
 --- Do one 'pullFluid' and one 'pullItem' on each machine, including multiblock machines

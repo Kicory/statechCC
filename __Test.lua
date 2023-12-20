@@ -31,8 +31,6 @@ end
 
 while true do
     local cur = os.clock()
-    -- TH.doMany(getItems, limit)
-    -- TH.doMany(pullEveryItem, limit)
     parallel.waitForAll(function() TH.doMany(getItemsb, 257) end, function() TH.doMany(getSize, 0) end)
     TH.doMany(getItemsb, 257)
     -- pullEveryItem(st)

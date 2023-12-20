@@ -259,7 +259,7 @@ function Recipes:makeAssemDrillHeadRecipes(...)
 					[gearID] = 2,
 				},
 				fluid = {
-					[Fluid.soldering_alloy] = 100,
+					[Fluid.soldering_alloy] = 75,
 				}
 			},
 			unitOutput = {

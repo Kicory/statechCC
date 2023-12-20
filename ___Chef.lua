@@ -1,6 +1,6 @@
 require("Dict")
 require("Recipes")
-local GoalsCtlg = require("Goals")
+local GoalsCtlg, DirectProductsCtlg = table.unpack(require("Goals"))
 local M = require("__Machines")
 local St = require("__Storage")
 local Helper = require("__Helpers")
@@ -15,19 +15,17 @@ function Chef.init()
 	moni = peripheral.find("monitor")
 end
 
-function Chef.step()
+function Chef.step(prevLackingStatus, prevMachineLackingStatus)
 	St.refreshCatalogue()
 	
-	local cur = os.clock()
-	
 	if moni then
-		St.printStatusToMonitor(GoalsCtlg, moni)
+		St.printStatusToMonitor(GoalsCtlg, DirectProductsCtlg, prevLackingStatus, prevMachineLackingStatus, moni)
 	end
 
 	local craftRequirements = St.getRequirements(Recipes, GoalsCtlg)
 
 	M.harvestToBufferSlow(St.bufferAE)
-	local factoryScd = M.makeFactoryCraftSchedule(craftRequirements, St.getCatalogueCopy())
+	local factoryScd, lackingStatus, machineLackingStatus = M.makeFactoryCraftSchedule(craftRequirements, St.getCatalogueCopy())
 
 	os.sleep(0.01)	-- 1 tick for AE system to prepare.
 
@@ -53,6 +51,7 @@ function Chef.step()
 			St.applyHarvestedCatalogue(M.harvestFromBuffer(St.bufferAE, St.BufferStorages, St.BufferTanks, St.mainAE))
 		end
 	end
+	return lackingStatus, machineLackingStatus
 end
 
 print("Initializing...")
@@ -60,8 +59,10 @@ local cur = os.clock()
 Chef.init()
 print("Initializing took " .. Helper.tickFrom(cur) .. " ticks")
 
+local lackingStatus = {}
+local machineLackingStatus = {}
 while true do
 	local cur = os.clock()
-	Chef.step()
+	lackingStatus, machineLackingStatus = Chef.step(lackingStatus, machineLackingStatus)
 	print(Helper.tickFrom(cur) .. " ticks for previous step.")
 end
