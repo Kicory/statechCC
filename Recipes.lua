@@ -60,6 +60,22 @@ local wiremillRecipeIDs = Helper.makeIDListOver(
 )
 Recipes:makeWiremillRecipes(table.unpack(wiremillRecipeIDs))
 -------------------------------------------------
+Recipes:makeMixerDustRecipes {
+	{M.lead, M.antimony, M.battery_alloy, 1, 1, 2},
+	{M.tin, M.copper, M.bronze, 1, 3, 4},
+	{M.copper, M.nickel, M.cupronickel, 1, 1, 2},
+	{M.silver, M.gold, M.electrum, 1, 1, 2},
+	{M.uranium_238, M.plutonium, M.he_mox, 6, 3, 9},
+	{M.uranium_238, M.uranium_235, M.he_uranium, 6, 3, 9},
+	{M.iron, M.nickel, M.invar, 2, 1, 3},
+	{M.chromium, M.aluminum, M.stainless_steel, M.kanthal, 1, 1, 1, 3},
+	{M.uranium_238, M.plutonium, M.le_mox, 8, 1, 9},
+	{M.uranium_238, M.uranium_235, M.le_uranium, 8, 1, 9},
+	{M.tin, M.lead, M.soldering_alloy, 1, 1, 2},
+	{M.chromium, M.iron, M.nickel, M.manganese, M.stainless_steel, 1, 6, 1, 1, 9},
+	{M.yttrium, M.annealed_copper, M.neodymium, M.iridium, M.superconductor, 3, 3, 2, 1, 9},
+}
+-------------------------------------------------
 Recipes:new { dispName = "Liquid Ender",
 	unitInput = {
 		item = {

@@ -84,14 +84,16 @@ local function refreshMachines()
 	end
 end
 --------------------------------------------
---- Returns true if the machine is empty.
----@param info any
----@return boolean the machine is completely empty.
-local function isEmptyMachine(storageInfo, tankInfo)
-	local ret = true
-	if storageInfo then
-		ret = ret and (next(storageInfo) == nil)
+
+local function isEmptyStorage(storageInfo)
+	if not storageInfo then 
+		return true
 	end
+	return next(storageInfo) == nil
+end
+
+local function isEmptyTank(tankInfo)
+	local ret = true
 	if tankInfo then
 		for _, ti in ipairs(tankInfo) do
 			ret = ret and ti.name == Fluid.empty
@@ -99,9 +101,16 @@ local function isEmptyMachine(storageInfo, tankInfo)
 	end
 	return ret
 end
+
+--- Returns true if the machine is empty.
+---@param info any
+---@return boolean the machine is completely empty.
+local function isEmptyMachine(storageInfo, tankInfo)
+	return isEmptyStorage(storageInfo) and isEmptyTank(tankInfo)
+end
 --------------------------------------------
 local function itemFitsCount(storageInfo, itemID, amt)
-	if next(storageInfo) == nil then
+	if storageInfo and isEmptyStorage(storageInfo) then
 		-- emtpy
 		local maxCount = OddMaxCount[itemID] or 64
 		return math.floor(maxCount / amt)
@@ -115,8 +124,11 @@ local function itemFitsCount(storageInfo, itemID, amt)
 end
 
 local function fluidFitsTankCount(tankInfo, fluidID, amt)
+	if tankInfo and isEmptyTank(tankInfo) then
+		return math.floor(tankInfo[1].capacity / amt)
+	end
 	for _, tank in pairs(tankInfo) do
-		if fluidID == tank.name or tank.name == Fluid.empty then
+		if fluidID == tank.name then
 			return math.floor((tank.capacity - tank.amount) / amt)
 		end
 	end

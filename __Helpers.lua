@@ -118,6 +118,10 @@ function Helper.makeMultipliedIO(io, factor)
 	return ret
 end
 
+function Helper.getIdOf(material, template, itemIdIndex)
+	return itemIdIndex[string.gsub(template, "%%m", material)]
+end
+
 --- Create long, flatten list of ItemIDs, by combination of "materials" and "templates".
 ---@param materials table material list
 ---@param templates table template list (mark place to substitute with material name by '%m')
@@ -130,11 +134,12 @@ function Helper.makeIDListOver(materials, templates, itemIdIndex)
 	for _, m in ipairs(materials) do
 		for _, t in ipairs(templates) do
 			-- Give boolean "false" if item ID is not exist
-			ret[#ret + 1] = itemIdIndex[string.gsub(t, "%%m", m)] or false
+			ret[#ret + 1] = Helper.getIdOf(m, t, itemIdIndex) or false
 		end
 	end
 	return ret
 end
+
 
 function Helper.IO2Catalogue(IO)
 	local ret = Ctlg:new()

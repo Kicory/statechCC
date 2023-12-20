@@ -336,3 +336,56 @@ function Recipes:makeWiremillRecipes(...)
 	end
 end
 
+function Recipes:makeMixerDustRecipes(ps)
+	local function dtmaker(mats, amts)
+		local inputs = {
+			item = {}
+		}
+		local outputs = {
+			item = {}
+		}
+		local tinyInputs = {
+			item = {}
+		}
+		local tinyOutputs = {
+			item = {}
+		}
+		local dustTml = "%m_dust"
+		local tDustTml = "%m_tiny_dust"
+		local ig = Helper.getIdOf
+
+		for idx = 1, #mats - 1 do
+			inputs.item[ig(mats[idx], dustTml, Item)] = amts[idx]
+			tinyInputs.item[ig(mats[idx], tDustTml, Item)] = amts[idx]
+		end
+		local name = ig(mats[#mats], dustTml, Item)
+		local tName = ig(mats[#mats], tDustTml, Item)
+		
+		outputs.item[name] = amts[#mats]
+		tinyOutputs.item[tName] = amts[#mats]
+
+		name = Helper.dispNameMaker(name)
+		tName = Helper.dispNameMaker(tName)
+
+		return inputs, outputs, name, tinyInputs, tinyOutputs, tName
+	end
+	
+	local function addOne(inputs, outputs, name)
+		self:new {
+			dispName = name .. " from Mixer",
+			unitInput = inputs,
+			unitOutput = outputs,
+			machineType = Machine.electric_mixer,
+			minimumPower = 2,
+		}
+	end
+
+	for _, ing in pairs(ps) do
+		local mats, amts
+		mats = {table.unpack(ing, 1, #ing / 2)}
+		amts = {table.unpack(ing, (#ing / 2) + 1)}
+		local i, o, n, ti, to, tn = dtmaker(mats, amts)
+		addOne(i, o, n)
+		addOne(ti, to, tn)
+	end
+end
