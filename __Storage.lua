@@ -68,7 +68,7 @@ end
 ---@return integer count of units successfully used
 ---@return table Catalogue of lacking materials
 function St.tryUse(availableCtlg, toUse, limit)
-	assert(limit ~= nil and limit > 0)
+	assert(limit ~= nil and limit > 0, Helper.serializeTable(toUse))
 
 	local toUseCtlg = Helper.IO2Catalogue(toUse)
 

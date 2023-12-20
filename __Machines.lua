@@ -188,9 +188,15 @@ local function markMachine(machineName, info, req, states)
 	
 	req.expInput = req.expInput or 1
 	if not minPowOk then return
-	elseif isEmpty then countTry = math.min(maxTryWhenEmpty, fitCount)
+	elseif isEmpty then countTry = maxTryWhenEmpty
 	elseif fitCount == 0 then return
-	else countTry = math.min(fitCount, req.required, math.max(math.floor(req.expInput), math.ceil(craftingSpeed))) end
+	else countTry = math.max(math.floor(req.expInput), math.ceil(craftingSpeed)) end
+	countTry = math.min(countTry, req.required, fitCount)
+
+	if countTry <= 0 then
+		print("isEmpty: " .. tostring(isEmpty) .. ", fitCount: " .. tostring(fitCount) .. ", countTry: " .. tostring(countTry))
+		error(machineName)
+	end
 
 	-- Mark if there is at least one available machine.
 	req.foundAvailableMachine = true
