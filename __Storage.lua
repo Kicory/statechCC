@@ -1,5 +1,5 @@
-require("Dict")
-require("Enviornment")
+local DispName = require("Dict").DispName
+local StorageSystems = require("Enviornment")
 local TH = require("__ThreadingHelpers")
 local Helper = require("__Helpers")
 local Ctlg = require("__Catalouge")
@@ -170,7 +170,7 @@ function St.printStatusToMonitor(goalsCtlg, dpCtlg, lackStatus, machineLackStatu
 				lackingMachineList[#lackingMachineList + 1] = k
 			end
 		end
-		printIDList(machineLackStatus)
+		printIDList(lackingMachineList)
 	end
 
 	-- Lack speed (should increase goal)

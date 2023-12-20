@@ -1,56 +1,15 @@
-require("MachineProperties")
-require("MultiblockMachines")
+local MachineProperty = require("MachineProperties")
+local BigMachines = require("MultiblockMachines")
 local TH = require("__ThreadingHelpers")
 local Helper = require("__Helpers")
 local Ctlg = require("__Catalouge")
 local St = require("__Storage")
+local Fluid = require("Dict").Fluid
+local Item = require("Dict").Item
+local Machine = require("Dict").Machine
+local PpType = require("Dict").PpType
+local OddMaxCount = require("Dict").OddMaxCount
 
---[[
-MachineList scheme:
-machineList = {
-	[machineType] = {
-		[machineName] = {						--> "MachineInfo"
-			wrapped = [object],
-
-			hasFluid = true/false,
-
-			hasItem = true/false,
-
-			getBasePower = function,
-			isBusy = function,
-
-			-------------------
-			fluidInputs/Outputs = {},			--> Multiblock Machine only (or nil)
-			itemInput/Output = [string],		--> Multiblock Machine only (or nil)
-			-------------------
-			singleBlockMachineName = [string]	--> Singleblock Machine only (or nil)
-			-------------------
-		},
-		...
-	},
-	...
-}
-]]
-
---[[
-Factory Schedule example:
-{
-	[machineName] = {					--> "Craft Schedule"
-		unitInput = recipe.unitInput,		-- basic information
-		unitOutput = recipe.unitOutput,		-- For tracking output catalogue
-		rank = recipe.rank,					-- for sorting
-		dispName = recipe.dispName,			-- for debug.
-
-		itemInput = [hatchName:string],		-- Multiblock machine only
-		fluidInputs = {						-- Multiblock machine only
-			[hatchName:string],
-			[hatchName:string],
-			...
-		}
-	},
-	...
-}
-]]
 
 local M = {}
 
@@ -58,6 +17,7 @@ local machineList = nil
 local machineNames = nil
 local factoryStatus = nil
 local paraCostLimit = 257
+local maxTryWhenEmpty = 2
 --------------------------------------------
 local function refreshMachines()
 	local singleBlockMachineTypes = {}
@@ -141,6 +101,11 @@ local function isEmptyMachine(storageInfo, tankInfo)
 end
 --------------------------------------------
 local function itemFitsCount(storageInfo, itemID, amt)
+	if next(storageInfo) == nil then
+		-- emtpy
+		local maxCount = OddMaxCount[itemID] or 64
+		return math.floor(maxCount / amt)
+	end
 	for _, slot in pairs(storageInfo) do
 		if itemID == slot.name then
 			return math.floor((slot.maxCount - slot.count) / amt)
@@ -151,7 +116,7 @@ end
 
 local function fluidFitsTankCount(tankInfo, fluidID, amt)
 	for _, tank in pairs(tankInfo) do
-		if fluidID == tank.name then
+		if fluidID == tank.name or tank.name == Fluid.empty then
 			return math.floor((tank.capacity - tank.amount) / amt)
 		end
 	end
@@ -181,9 +146,9 @@ local function getMachineReadiness(machineName, recipe)
 	local craftingInfo = factoryStatus[machineName].craftingInfo
 
 	local function getCraftingSpeed(ci)
-		local base = ci.baseRecipeCost
-		local curr = ci.currentRecipeCost
-		if base ~= nil and curr ~= nil then return curr / base
+		local ce = ci.currentEfficiency
+
+		if ce ~= nil then return math.floor(math.pow(1.0672, math.min(ce, 64)))
 		else return 1 end
 	end
 
@@ -211,7 +176,7 @@ local function markMachine(machineName, info, req, states)
 	
 	req.expInput = req.expInput or 1
 	if not minPowOk then return
-	elseif isEmpty then countTry = 1
+	elseif isEmpty then countTry = math.min(maxTryWhenEmpty, fitCount)
 	elseif fitCount == 0 then return
 	else countTry = math.min(fitCount, req.required, math.max(math.floor(req.expInput), math.ceil(craftingSpeed))) end
 
@@ -238,8 +203,8 @@ local function markMachine(machineName, info, req, states)
 
 	-- Do schedule
 	resultSchedule[machineName] = {
-		unitInput = inputScheduled,			-- Basic information
-		unitOutput = outputScheduled,		-- For tracking output catalogue
+		input = inputScheduled,				-- Basic information
+		output = outputScheduled,			-- For tracking output catalogue
 		rank = recipe.rank,					-- for preemption
 		dispName = recipe.dispName,			-- for debug
 		itemInput = info.itemInput,			-- Multiblock machine only
@@ -253,7 +218,7 @@ local function markMachine(machineName, info, req, states)
 	expectedOutputCtlg:inPlaceAdd(Helper.IO2Catalogue(outputScheduled), Ctlg.ALLOW_KEY_CREATION)
 
 	-- Increase exponential input criteria
-	req.expInput = req.expInput * 2
+	req.expInput = req.expInput * 1.7
 end
 
 local function makeCraftSchedule(req, states)
@@ -263,10 +228,9 @@ local function makeCraftSchedule(req, states)
 	local globalRequiredFullfilled = alreadyScheduledCtlg / Helper.IO2Catalogue(recipeOutput)
 	req.required = math.max(req.required - globalRequiredFullfilled, 0)
 
-	for _, mt in ipairs(req.recipe.machineTypes) do
-		for _, mn in ipairs(machineNames[mt]) do
-			markMachine(mn, machineList[mt][mn], req, states)
-		end
+	local mt = req.recipe.machineType
+	for _, mn in ipairs(machineNames[mt]) do
+		markMachine(mn, machineList[mt][mn], req, states)
 	end
 end
 --------------------------------------------
@@ -341,8 +305,8 @@ local function prepareFactoryStatus()
 	local itemPuller = St.bufferAE.pullItem
 	local fluidPuller = St.bufferAE.pullFluid
 	for mt, machines in pairs(machineList) do
-		local itemPullCnt = Property.OutputItemSlotCount[mt] or 0
-		local fluidPullCnt = Property.OutputFluidSlotCount[mt] or 0
+		local itemPullCnt = MachineProperty.OutputItemSlotCount[mt] or 0
+		local fluidPullCnt = MachineProperty.OutputFluidSlotCount[mt] or 0
 
 		for mn, info in pairs(machines) do
 			local thisParaCost = paraCost(info, itemPullCnt + fluidPullCnt)
@@ -393,6 +357,9 @@ function M.makeFactoryCraftSchedule(craftReqs, afterFeedCtlg)
 		makeCraftSchedule(req, states)
 		for id in pairs(req.lackingCtlg or {}) do
 			lackingStatus[id] = true
+		end
+		if not req.foundAvailableMachine then
+			machineLackingStatus[req.recipe.machineType] = true
 		end
 	end
 
@@ -541,7 +508,7 @@ function M.feedFactory(scd, fromAE)
 	local accParaCost = 0
 	local feedJobs = {}
 	for name, craftScd in pairs(scd) do
-		local thisParaCost = paraCost(Helper.IO2Catalogue(craftScd.unitInput))
+		local thisParaCost = paraCost(Helper.IO2Catalogue(craftScd.input))
 		if (accParaCost + thisParaCost) > paraCostLimit then
 			parallel.waitForAll(table.unpack(feedJobs))
 			feedJobs = {}
@@ -550,26 +517,26 @@ function M.feedFactory(scd, fromAE)
 
 		-- Item feeding
 		local itemTarget = craftScd.itemInput or name
-		for itemID, count in pairs(craftScd.unitInput.item or {}) do
+		for itemID, count in pairs(craftScd.input.item or {}) do
 			feedJobs[#feedJobs + 1] = function() feedItem(itemTarget, itemID, count) end
 		end
 		
 		-- Fluid feeding
 		if not craftScd.fluidInputs then
 			-- Singleblock machine
-			for fluidID, amt in pairs(craftScd.unitInput.fluid or {}) do
+			for fluidID, amt in pairs(craftScd.input.fluid or {}) do
 				feedJobs[#feedJobs + 1] = function() feedFluid(name, fluidID, amt) end
 			end
 		else
 			-- Multiblock machine
-			local hatchMatches = getConsistantFluidHatchMatches(craftScd.unitInput.fluid, craftScd.fluidInputs)
+			local hatchMatches = getConsistantFluidHatchMatches(craftScd.input.fluid, craftScd.fluidInputs)
 			for hatch, fluidFeedInfo in pairs(hatchMatches) do
 				feedJobs[#feedJobs + 1] = function() feedFluid(hatch, fluidFeedInfo.fluidID, fluidFeedInfo.amt) end
 			end
 		end
 	
 		-- Counting
-		expectedOutputCtlg:inPlaceAdd(Helper.IO2Catalogue(craftScd.unitOutput), Ctlg.ALLOW_KEY_CREATION)
+		expectedOutputCtlg:inPlaceAdd(Helper.IO2Catalogue(craftScd.output), Ctlg.ALLOW_KEY_CREATION)
 
 		-- Increament paraCost
 		accParaCost = accParaCost + thisParaCost

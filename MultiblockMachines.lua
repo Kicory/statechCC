@@ -1,7 +1,7 @@
-require("Dict")
+local MM = require("Dict").MultiblockMachine
 
-BigMachines = {
-	[MultiblockMachine.smelterMega] = {
+local BigMachines = {
+	[MM.smelterMega] = {
 		["modern_industrialization:mega_smelter_1"] = {
 			wrapped = nil, -- will filled by __Machines.refreshMachines
 
@@ -21,7 +21,7 @@ BigMachines = {
 		}
 	},
 	--
-	[MultiblockMachine.chemicalReactorLarge] = {
+	[MM.chemicalReactorLarge] = {
 	 	["modern_industrialization:large_chemical_reactor_2"] = {
 	 		hasFluid = true,
 	 		fluidInputs = {
@@ -41,3 +41,5 @@ BigMachines = {
 	}
 	--]]
 }
+
+return BigMachines

@@ -1,38 +1,15 @@
-local Helper = require("__Helpers")
-local TH = require("__ThreadingHelpers")
-require("__Storage")
+local H = require("__Helpers")
+local log = {}
 
-local ae = "ae2:creative_energy_cell_0"
-local st = "modern_industrialization:configurable_chest_4"
-local b = "minecraft:barrel_0"
-local stw = peripheral.wrap(st)
-local aew = peripheral.wrap(ae)
-local bw = peripheral.wrap(b)
-local pullItem = aew.pullItem
-
-local limit = 257
-local curLim = 0
-
-local function pullEveryItem()
-    pullItem(st)
-end
-function getItems()
-    stw.items()
-end
-function getItemsb()
-    return peripheral.call(b, "list")
-end
-function getSize()
-    return bw.size()
-end
-function hehe()
-    return 10
-end
+local r = peripheral.wrap("right")
 
 while true do
-    local cur = os.clock()
-    parallel.waitForAll(function() TH.doMany(getItemsb, 257) end, function() TH.doMany(getSize, 0) end)
-    TH.doMany(getItemsb, 257)
-    -- pullEveryItem(st)
-    print(Helper.tickFrom(cur))
+    local cin = r.getCraftingInformation()
+    if cin.currentEfficiency then
+        log[cin.currentEfficiency] = cin.currentRecipeCost
+        if (cin.currentEfficiency == 64) then
+            break
+        end
+    end
+    H.printPretty(log)
 end

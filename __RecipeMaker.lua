@@ -1,4 +1,6 @@
-require("Dict")
+local Machine = require("Dict").Machine
+local Item = require("Dict").Item
+local Fluid = require("Dict").Fluid
 local Helper = require("__Helpers")
 local Ctlg = require("__Catalouge")
 
@@ -18,7 +20,7 @@ function Recipes:new(specs)
 
 	if not specs.unitInput then error("No input for recipe: " .. dispName) return end
 	if not specs.unitOutput then error("No output for recipe: " .. dispName) return end
-	if not specs.machineTypes then error("No machine type specified for recipe: " .. dispName) return end
+	if not specs.machineType then error("No machine type specified for recipe: " .. dispName) return end
 	if not specs.minimumPower then error("No machine minimum power requirement: " .. dispName) return end
 
 	local order = #Recipes + 1
@@ -28,7 +30,7 @@ function Recipes:new(specs)
 		dispName = specs.dispName,
 		unitInput = specs.unitInput,
 		unitOutput = specs.unitOutput,
-		machineTypes = specs.machineTypes,
+		machineType = specs.machineType,
 		minimumPower = specs.minimumPower,
 	}
 
@@ -80,9 +82,7 @@ function Recipes:makeCompressorRecipesBasic(...)
 						[outputID] = outputCnt
 					}
 				},
-				machineTypes = {
-					Machine.electric_compressor
-				},
+				machineType = Machine.electric_compressor,
 				minimumPower = 2
 			}
 		end
@@ -119,9 +119,7 @@ function Recipes:makeCompressorRecipesCustom(...)
 					[toID] = 1
 				}
 			},
-			machineTypes = {
-				Machine.electric_compressor
-			},
+			machineType = Machine.electric_compressor,
 			minimumPower = 2
 		}
 	end
@@ -150,9 +148,7 @@ function Recipes:makeCutterRodRecipes(...)
 						[toID] = 4
 					}
 				},
-				machineTypes = {
-					Machine.electric_cutting_machine
-				},
+				machineType = Machine.electric_cutting_machine,
 				minimumPower = 2
 			}
 		end
@@ -172,9 +168,7 @@ function Recipes:makeCutterRodRecipes(...)
 						[toID] = 2
 					}
 				},
-				machineTypes = {
-					Machine.electric_cutting_machine
-				},
+				machineType = Machine.electric_cutting_machine,
 				minimumPower = 2
 			}
 		end
@@ -201,9 +195,7 @@ function Recipes:makePackerBladeRecipes(...)
 					[bladeID] = 4,
 				}
 			},
-			machineTypes = {
-				Machine.electric_packer
-			},
+			machineType = Machine.electric_packer,
 			minimumPower = 2
 		}
 	end
@@ -232,9 +224,7 @@ function Recipes:makeAssemGearRecipes(...)
 					[gearID] = 2,
 				}
 			},
-			machineTypes = {
-				Machine.assembler
-			},
+			machineType = Machine.assembler,
 			minimumPower = 2
 		}
 	end
@@ -267,9 +257,7 @@ function Recipes:makeAssemDrillHeadRecipes(...)
 					[dhID] = 1,
 				}
 			},
-			machineTypes = {
-				Machine.assembler
-			},
+			machineType = Machine.assembler,
 			minimumPower = 2
 		}
 	end
@@ -298,9 +286,7 @@ function Recipes:makeAssemRotorRecipes(...)
 					[rotorID] = 1,
 				}
 			},
-			machineTypes = {
-				Machine.assembler
-			},
+			machineType = Machine.assembler,
 			minimumPower = 2
 		}
 	end
@@ -326,9 +312,7 @@ function Recipes:makeWiremillRecipes(...)
 						[wireID] = 2
 					}
 				},
-				machineTypes = {
-					Machine.electric_wiremill
-				},
+				machineType = Machine.electric_wiremill,
 				minimumPower = 2
 			}
 		end
@@ -345,9 +329,7 @@ function Recipes:makeWiremillRecipes(...)
 						[fineWireID] = 4
 					}
 				},
-				machineTypes = {
-					Machine.electric_wiremill
-				},
+				machineType = Machine.electric_wiremill,
 				minimumPower = 2
 			}
 		end

@@ -1,5 +1,5 @@
 
-TH = {}
+local TH = {}
 
 function TH.paraForNoResults(consumer, ...)
     local todos = {}

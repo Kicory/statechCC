@@ -1,4 +1,6 @@
-Prefix = {
+local Dict = {}
+
+Dict.Prefix = {
 	moin = "modern_industrialization:",
 	techReborn = "techreborn:",
 	vanilla = "minecraft:",
@@ -6,13 +8,13 @@ Prefix = {
 	adAstra = "ad_astra:"
 }
 
-local mi = Prefix.moin
-local tr = Prefix.techReborn
-local va = Prefix.vanilla
-local cr = Prefix.create
-local ad = Prefix.adAstra
+local mi = Dict.Prefix.moin
+local tr = Dict.Prefix.techReborn
+local va = Dict.Prefix.vanilla
+local cr = Dict.Prefix.create
+local ad = Dict.Prefix.adAstra
 
-Item = {
+Dict.Item = {
 	copper_ingot										= va .. "copper_ingot",
 	iron_ingot 											= va .. "iron_ingot",
 	gold_ingot 											= va .. "gold_ingot",
@@ -26,6 +28,7 @@ Item = {
 	lapis_lazuli										= va .. "lapis_lazuli",
 	diamond												= va .. "diamond",
 	emerald												= va .. "emerald",
+	ender_pearl											= va .. "ender_pearl",
 	refined_iron_ingot 									= tr .. "refined_iron_ingot",
 	calcite_dust 										= tr .. "calcite_dust",
 	limestone 											= cr .. "limestone",
@@ -1001,7 +1004,7 @@ Item = {
 		zinc_tiny_dust 									= mi .. "zinc_tiny_dust",
 }
 
-Fluid = {
+Dict.Fluid = {
 	empty									= va .. "empty",
 	water									= va .. "water",
 	lava									= va .. "lava",
@@ -1103,33 +1106,36 @@ Fluid = {
 	wood_tar								= mi .. "wood_tar",
 }
 
-DispName = {
-	[Item.battery_alloy_dust]		= "Bat. Alloy Dust",
-	[Item.soldering_alloy_dust]		= "Sold. Alloy Dust",
+local I = Dict.Item
+
+Dict.DispName = {
+	[I.battery_alloy_dust]		= "Bat. Alloy Dust",
+	[I.soldering_alloy_dust]		= "Sold. Alloy Dust",
 }
 
-Machine = {
-	electric_compressor = Item.electric_compressor,
-	electric_cutting_machine = Item.electric_cutting_machine,
-	electric_furnace = Item.electric_furnace,
-	electric_macerator = Item.electric_macerator,
-	electric_mixer = Item.electric_mixer,
-	electric_packer = Item.electric_packer,
-	electric_unpacker = Item.electric_unpacker,
-	electric_wiremill = Item.electric_wiremill,
-	centrifuge = Item.centrifuge,
-	electrolyzer = Item.electrolyzer,
-	assembler = Item.assembler,
-	chemical_reactor = Item.chemical_reactor,
-	polarizer = Item.polarizer,
-	alloy_smelter = Item.alloy_smelter,
-}
-MultiblockMachine = {
-	smelterMega = Item.mega_smelter,
-	chemicalReactorLarge = Item.large_chemical_reactor,
+Dict.Machine = {
+	electric_compressor = I.electric_compressor,
+	electric_cutting_machine = I.electric_cutting_machine,
+	electric_furnace = I.electric_furnace,
+	electric_macerator = I.electric_macerator,
+	electric_mixer = I.electric_mixer,
+	electric_packer = I.electric_packer,
+	electric_unpacker = I.electric_unpacker,
+	electric_wiremill = I.electric_wiremill,
+	centrifuge = I.centrifuge,
+	electrolyzer = I.electrolyzer,
+	assembler = I.assembler,
+	chemical_reactor = I.chemical_reactor,
+	polarizer = I.polarizer,
+	alloy_smelter = I.alloy_smelter,
 }
 
-PpType = {
+Dict.MultiblockMachine = {
+	smelterMega = I.mega_smelter,
+	chemicalReactorLarge = I.large_chemical_reactor,
+}
+
+Dict.PpType = {
 	fluidStorage = "fluid_storage",
 	itemStorage = "item_storage",
 	miCrafter = "mi_crafter",
@@ -1138,7 +1144,7 @@ PpType = {
 	creativeEnergyCell = "ae2:creative_energy_cell",
 }
 
-MatType = {
+Dict.MatType = {
 	copper = "copper",
 	bronze = "bronze",
 	gold = "gold",
@@ -1177,3 +1183,9 @@ MatType = {
 	le_mox = "le_mox",
 	le_uranium = "le_uranium",
 }
+
+Dict.OddMaxCount = {
+	[I.ender_pearl] = 16
+}
+
+return Dict

@@ -1,6 +1,7 @@
-require("Dict")
+local Prefix = require("Dict").Prefix
+local I = require("Dict").Item
+local Fluid = require("Dict").Fluid
 
-local I = Item
 local mi = Prefix.moin
 local tr = Prefix.techReborn
 local va = Prefix.vanilla

@@ -1,4 +1,4 @@
-StorageSystems = {
+local StorageSystems = {
 	buffer = "ae2:creative_energy_cell_2",
 	main = "ae2:dense_energy_cell_0",
 	BufferStorages = {
@@ -14,3 +14,5 @@ StorageSystems = {
 		"modern_industrialization:configurable_tank_5",
 	}
 }
+
+return StorageSystems

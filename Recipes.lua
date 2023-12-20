@@ -1,9 +1,11 @@
-require("Dict")
+local I = require("Dict").Item
+local F = require("Dict").Fluid
+local Machine = require("Dict").Machine
+local MultiblockMachine = require("Dict").MultiblockMachine
+local M = require("Dict").MatType
+
 require("__RecipeMaker")
 local Helper = require("__Helpers")
-
-local I = Item
-local M = MatType
 
 local compBasicRecipeIDs = Helper.makeIDListOver(
 	{M.copper, M.bronze, M.iron, M.battery_alloy, M.electrum, M.enderium, M.gold, M.silver, M.steel, M.tin, M.invar, M.lead, M.aluminum, M.beryllium, M.annealed_copper,
@@ -61,73 +63,65 @@ Recipes:makeWiremillRecipes(table.unpack(wiremillRecipeIDs))
 Recipes:new { dispName = "Liquid Ender",
 	unitInput = {
 		item = {
-			[Item.ender_pearl_dust] = 2,
+			[I.ender_pearl_dust] = 2,
 		},
 		fluid = {
-			[Fluid.water] = 800
+			[F.water] = 800
 		}
 	},
 	unitOutput = {
 		fluid = {
-			[Fluid.liquid_ender] = 1000
+			[F.liquid_ender] = 1000
 		}
 	},
-	machineTypes = {
-		Machine.electric_mixer,
-	},
+	machineType = Machine.electric_mixer,
 	minimumPower = 8
 }
----------------
+-------------------------------------------------
 Recipes:new { dispName = "Battery Alloy Dust",
 	unitInput = {
 		item = {
-			[Item.lead_dust] = 1,
-			[Item.antimony_dust] = 1,
+			[I.lead_dust] = 1,
+			[I.antimony_dust] = 1,
 		}
 	},
 	unitOutput = {
 		item = {
-			[Item.battery_alloy_dust] = 2
+			[I.battery_alloy_dust] = 2
 		}
 	},
-	machineTypes = {
-		Machine.electric_mixer,
-	},
+	machineType = Machine.electric_mixer,
 	minimumPower = 8
 }
-
+-------------------------------------------------
 Recipes:new { dispName = "Raw Biodiesel",
 	unitInput = {
 		fluid = {
-			[Fluid.plant_oil] = 24000,
-			[Fluid.ethanol] = 1600,
-			[Fluid.sodium_hydroxide] = 400,
+			[F.plant_oil] = 24000,
+			[F.ethanol] = 1600,
+			[F.sodium_hydroxide] = 400,
 		}
 	},
 	unitOutput = {
 		fluid = {
-			[Fluid.raw_biodiesel] = 6000
+			[F.raw_biodiesel] = 6000
 		}
 	},
-	machineTypes = {
-		MultiblockMachine.chemicalReactorLarge,
-	},
+	machineType = MultiblockMachine.chemicalReactorLarge,
 	minimumPower = 24
 }
-
+-------------------------------------------------
 Recipes:new { dispName = "Copper Ingot Mega",
 	unitInput = {
 		item = {
-			[Item.copper_dust] = 32
+			[I.copper_dust] = 32
 		}
 	},
 	unitOutput = {
 		item = {
-			[Item.copper_ingot] = 32
+			[I.copper_ingot] = 32
 		}
 	},
-	machineTypes = {
-		MultiblockMachine.smelterMega,
-	},
+	machineType = MultiblockMachine.smelterMega,
 	minimumPower = 32
 }
