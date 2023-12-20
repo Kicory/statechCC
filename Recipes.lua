@@ -75,6 +75,17 @@ Recipes:makeMixerDustRecipes {
 	{M.chromium, M.iron, M.nickel, M.manganese, M.stainless_steel, 1, 6, 1, 1, 9},
 	{M.yttrium, M.annealed_copper, M.neodymium, M.iridium, M.superconductor, 3, 3, 2, 1, 9},
 }
+
+Recipes:makeSingleMixerRecipeCustom(I.wood_pulp, 1, nil, F.water, 100, nil, I.paper, 2, nil, nil, "Paper with Mixer", 2)
+Recipes:makeSingleMixerRecipeCustom(I.redstone, 1, nil, F.creosote, 500, nil, nil, F.lubricant, 500, nil, "Lubricant from Creosote with Mixer", 2)
+Recipes:makeSingleMixerRecipeCustom(I.sand, 1, nil, F.water, 1000, nil, I.clay, 1, nil, nil, "Clay from Mixer", 2)
+Recipes:makeSingleMixerRecipeCustom(I.brick_dust, 2, I.clay_dust, 2, nil, nil, I.fire_clay_dust, 4, nil, nil, Helper.dispNameMaker(I.fire_clay_dust), 2)
+Recipes:makeSingleMixerRecipeCustom(I.iron_dust, 7, I.coke_dust, 2, nil, nil, I.uncooked_steel_dust, 9, nil, nil, Helper.dispNameMaker(I.uncooked_steel_dust), 2)
+Recipes:makeSingleMixerRecipeCustom(I.paper, 9, nil, F.synthetic_rubber, 1000, nil, I.rubber_sheet, 12 * 9, nil, nil, "Rubber Sheet from paper and rubber", 2)
+Recipes:makeSingleMixerRecipeCustom(I.coke_dust, 1, I.sulfur_dust, 1, nil, nil, I.gunpowder, 2, nil, nil, "Gunpowder from Mixer", 2)
+Recipes:makeSingleMixerRecipeCustom(I.coal_dust, 9, nil, F.water, 900, nil, nil, F.raw_synthetic_oil, 2000, nil, Helper.dispNameMaker(F.raw_synthetic_oil), 2)
+-------------------------------------------------
+
 -------------------------------------------------
 Recipes:new { dispName = "Liquid Ender",
 	unitInput = {

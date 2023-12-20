@@ -389,3 +389,37 @@ function Recipes:makeMixerDustRecipes(ps)
 		addOne(ti, to, tn)
 	end
 end
+
+--- Make single Mixer recipe. [ID], [amt], [ID], [amt], nil, [ID], [amt], ...
+--- [Item inputs], nil, [Fluid Inputs], nil, [Item outputs], nil, [Fluid outputs], nil, [DispName], [minimum Power]
+function Recipes:makeSingleMixerRecipeCustom(...)
+	local ps = table.pack(...)
+	local r = {
+		machineType = Machine.electric_mixer,
+		unitInput = {
+			item = {},
+			fluid = {}
+		},
+		unitOutput = {
+			item = {},
+			fluid = {}
+		}
+	}
+	local function doSingleIO(tab, idx)
+		while(ps[idx]) do
+			tab[ps[idx]] = ps[idx + 1]
+			idx = idx + 2
+		end
+		return idx + 1
+	end
+	local idx = 1
+	idx = doSingleIO(r.unitInput.item, idx)
+	idx = doSingleIO(r.unitInput.fluid, idx)
+	idx = doSingleIO(r.unitOutput.item, idx)
+	idx = doSingleIO(r.unitOutput.fluid, idx)
+	r.dispName = ps[idx]
+	idx = idx + 1
+	r.minimumPower = ps[idx]
+	Helper.printPretty(r)
+	Recipes:new(r)
+end
