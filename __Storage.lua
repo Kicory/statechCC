@@ -3,6 +3,7 @@ local StorageSystems = require("Enviornment")
 local TH = require("__ThreadingHelpers")
 local Helper = require("__Helpers")
 local Ctlg = require("__Catalouge")
+local Recipes = require("Recipes")
 
 local St = {
 	bufferAE = nil,
@@ -32,7 +33,7 @@ end
 -----------------------------------
 function St.init()
 	findStorageSystems()
-	emptyCtlg = Recipes:getMaterialsUsedEmptyCtlg()
+	emptyCtlg = Recipes.getMaterialsUsedEmptyCtlg()
 end
 
 function St.refreshCatalogue()

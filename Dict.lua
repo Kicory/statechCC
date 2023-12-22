@@ -15,6 +15,7 @@ local cr = Dict.Prefix.create
 local ad = Dict.Prefix.adAstra
 
 Dict.Item = {
+	raw_iron											= va .. "raw_iron",
 	copper_ingot										= va .. "copper_ingot",
 	iron_ingot 											= va .. "iron_ingot",
 	gold_ingot 											= va .. "gold_ingot",
@@ -32,6 +33,7 @@ Dict.Item = {
 	emerald												= va .. "emerald",
 	ender_pearl											= va .. "ender_pearl",
 	gunpowder											= va .. "gunpowder",
+	flint												= va .. "flint",
 	refined_iron_ingot 									= tr .. "refined_iron_ingot",
 	calcite_dust 										= tr .. "calcite_dust",
 	limestone 											= cr .. "limestone",

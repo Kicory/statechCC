@@ -1,4 +1,4 @@
-require("Recipes")
+local Recipes = require("Recipes")
 local GoalsCtlg, DirectProductsCtlg = table.unpack(require("Goals"))
 local M = require("__Machines")
 local St = require("__Storage")
