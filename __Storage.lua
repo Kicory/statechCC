@@ -1,4 +1,5 @@
 local DispName = require("Dict").DispName
+local DirectProd = require("Dict").DirectProd
 local StorageSystems = require("Enviornment")
 local TH = require("__ThreadingHelpers")
 local Helper = require("__Helpers")
@@ -90,15 +91,7 @@ function St.getRequirements(wholeRecipes, goalsCtlg)
 	local craftRequirements = {}
 
 	local function getRequiredUnit(recipe)
-		local output = recipe.unitOutput
-		local requiredUnit = 0
-		for itemID, count in pairs(output.item or {}) do
-			requiredUnit = math.max(requiredUnit, math.ceil(requiredCtlg[itemID] / count))
-		end
-		for fluidID, amt in pairs(output.fluid or {}) do
-			requiredUnit = math.max(requiredUnit, math.ceil(requiredCtlg[fluidID] / amt))
-		end
-		return requiredUnit
+		return -((-requiredCtlg) / Helper.IO2Catalogue(recipe.unitOutput))
 	end
 
 	for _, recipe in ipairs(wholeRecipes) do
@@ -133,7 +126,7 @@ function St.printCraftingCtlg()
 	Helper.printPretty(craftingCtlg)
 end
 
-function St.printStatusToMonitor(goalsCtlg, dpCtlg, lackStatus, machineLackStatus, moni)
+function St.printStatusToMonitor(goalsCtlg, lackStatus, machineLackStatus, moni)
 	moni.clear()
 	moni.setCursorPos(1, 1)
 	
@@ -158,7 +151,12 @@ function St.printStatusToMonitor(goalsCtlg, dpCtlg, lackStatus, machineLackStatu
 	-- Lack raw material (should increase raw material production)
 	do
 		Helper.printRowOf({1}, {colors.black}, {colors.white}, {"  Lacking Raw Materials"}, moni)
-		local dpLacksList = dpCtlg:copy():filter(function(k, v) return lackStatus[k] == true end):getKeys()
+		local dpLacksList = {}
+		for id in pairs(DirectProd) do
+			if lackStatus[id] then
+				dpLacksList[#dpLacksList] = id
+			end
+		end
 		printIDList(dpLacksList)
 	end
 

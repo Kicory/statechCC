@@ -56,6 +56,13 @@ local mt = {
 		end
 		error("Only support division with other ctlg or number")
 	end,
+	__unm = function(ctlg)
+		local ret = ctlg:copy()
+		for k, v in pairs(ret) do
+			ret[k] = -v
+		end
+		return ret
+	end,
 }
 
 function Ctlg:new(o)

@@ -5,7 +5,8 @@ Dict.Prefix = {
 	techReborn = "techreborn:",
 	vanilla = "minecraft:",
 	create = "create:",
-	adAstra = "ad_astra:"
+	adAstra = "ad_astra:",
+	byg = "byg:",
 }
 
 local mi = Dict.Prefix.moin
@@ -13,40 +14,55 @@ local tr = Dict.Prefix.techReborn
 local va = Dict.Prefix.vanilla
 local cr = Dict.Prefix.create
 local ad = Dict.Prefix.adAstra
+local by = Dict.Prefix.byg
 
 Dict.Item = {
-	raw_iron											= va .. "raw_iron",
-	copper_ingot										= va .. "copper_ingot",
-	iron_ingot 											= va .. "iron_ingot",
-	gold_ingot 											= va .. "gold_ingot",
-	cobblestone											= va .. "cobblestone",
-	redstone											= va .. "redstone",
-	gravel												= va .. "gravel",
-	sand												= va .. "sand",
-	clay												= va .. "clay",
-	glass												= va .. "glass",
-	glass_pane											= va .. "glass_pane",
-	paper												= va .. "paper",
-	hopper												= va .. "hopper",
-	lapis_lazuli										= va .. "lapis_lazuli",
-	diamond												= va .. "diamond",
-	emerald												= va .. "emerald",
-	ender_pearl											= va .. "ender_pearl",
-	gunpowder											= va .. "gunpowder",
-	flint												= va .. "flint",
-	refined_iron_ingot 									= tr .. "refined_iron_ingot",
-	calcite_dust 										= tr .. "calcite_dust",
-	limestone 											= cr .. "limestone",
-	ender_pearl_dust									= tr .. "ender_pearl_dust",
-	tungstensteel_ingot									= tr .. "tungstensteel_ingot",
-	tungstensteel_plate									= tr .. "tungstensteel_plate",
-	lazurite_dust										= tr .. "lazurite_dust",
-	lazurite_plate										= tr .. "lazurite_plate",
-	calorite_ingot										= ad .. "calorite_ingot",
-	calorite_plate										= ad .. "calorite_plate",
-	desh_ingot											= ad .. "desh_ingot",
-	desh_plate											= ad .. "desh_plate",
-
+	-- Vanila Things
+		raw_iron											= va .. "raw_iron",
+		copper_ingot										= va .. "copper_ingot",
+		iron_ingot 											= va .. "iron_ingot",
+		gold_ingot 											= va .. "gold_ingot",
+		cobblestone											= va .. "cobblestone",
+		redstone											= va .. "redstone",
+		gravel												= va .. "gravel",
+		sand												= va .. "sand",
+		clay												= va .. "clay",
+		glass												= va .. "glass",
+		glass_pane											= va .. "glass_pane",
+		paper												= va .. "paper",
+		hopper												= va .. "hopper",
+		lapis_lazuli										= va .. "lapis_lazuli",
+		diamond												= va .. "diamond",
+		emerald												= va .. "emerald",
+		ender_pearl											= va .. "ender_pearl",
+		gunpowder											= va .. "gunpowder",
+		glowstone											= va .. "glowstone",
+		glowstone_dust										= va .. "glowstone_dust",
+		flint												= va .. "flint",
+	--
+	-- Tech Reborn things
+		refined_iron_ingot 									= tr .. "refined_iron_ingot",
+		calcite_dust 										= tr .. "calcite_dust",
+		galena_dust											= tr .. "galena_dust",
+		ender_pearl_dust									= tr .. "ender_pearl_dust",
+		tungstensteel_ingot									= tr .. "tungstensteel_ingot",
+		tungstensteel_plate									= tr .. "tungstensteel_plate",
+		lazurite_dust										= tr .. "lazurite_dust",
+		lazurite_plate										= tr .. "lazurite_plate",
+		cinnabar_ore										= tr .. "cinnabar_ore",
+		pyrite_ore											= tr .. "pyrite_ore",
+		sphalerite_ore										= tr .. "sphalerite_ore",
+	--
+	-- Others
+		limestone 											= cr .. "limestone",
+		calorite_ingot										= ad .. "calorite_ingot",
+		calorite_plate										= ad .. "calorite_plate",
+		desh_ingot											= ad .. "desh_ingot",
+		desh_plate											= ad .. "desh_plate",
+		emeraldite_ore										= by .. "emeraldite_ore",
+		pendorite_ore										= by .. "pendorite_ore",
+		anthracite_ore										= by .. "anthracite_ore",
+	--
 	-- MI things (too much)
 		acetylene_bucket 								= mi .. "acetylene_bucket",
 		acrylic_acid_bucket 							= mi .. "acrylic_acid_bucket",
@@ -1112,10 +1128,12 @@ Dict.Fluid = {
 }
 
 local I = Dict.Item
+local F = Dict.Fluid
 
 Dict.DispName = {
 	[I.battery_alloy_dust]		= "Bat. Alloy Dust",
-	[I.soldering_alloy_dust]		= "Sold. Alloy Dust",
+	[I.soldering_alloy_dust]	= "Sold. Alloy Dust",
+	[I.redstone]				= "Redstone Dust",
 }
 
 Dict.Machine = {
@@ -1196,6 +1214,18 @@ Dict.MatType = {
 	he_uranium = "he_uranium",
 	le_mox = "le_mox",
 	le_uranium = "le_uranium",
+}
+
+Dict.DirectProd = {
+	[F.water]							= Dict.STORE_FOREVER,
+
+	-- Bronze Drill
+
+	-- Gold Drill
+	
+	-- Steel Drill
+
+	-- Process Chains
 }
 
 Dict.OddMaxCount = {

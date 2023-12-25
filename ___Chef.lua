@@ -1,5 +1,5 @@
 local Recipes = require("Recipes")
-local GoalsCtlg, DirectProductsCtlg = table.unpack(require("Goals"))
+local GoalsCtlg = require("Goals")
 local M = require("__Machines")
 local St = require("__Storage")
 local Helper = require("__Helpers")
@@ -18,7 +18,7 @@ function Chef.step(prevLackingStatus, prevMachineLackingStatus)
 	St.refreshCatalogue()
 	
 	if moni then
-		St.printStatusToMonitor(GoalsCtlg, DirectProductsCtlg, prevLackingStatus, prevMachineLackingStatus, moni)
+		St.printStatusToMonitor(GoalsCtlg, prevLackingStatus, prevMachineLackingStatus, moni)
 	end
 
 	local craftRequirements = St.getRequirements(Recipes, GoalsCtlg)
