@@ -7,6 +7,7 @@ Dict.Prefix = {
 	create = "create:",
 	adAstra = "ad_astra:",
 	byg = "byg:",
+	ae2 = "ae2:",
 }
 
 local mi = Dict.Prefix.moin
@@ -15,6 +16,7 @@ local va = Dict.Prefix.vanilla
 local cr = Dict.Prefix.create
 local ad = Dict.Prefix.adAstra
 local by = Dict.Prefix.byg
+local ae = Dict.Prefix.ae2
 
 Dict.Item = {
 	-- Vanila Things
@@ -23,22 +25,43 @@ Dict.Item = {
 		iron_ingot 											= va .. "iron_ingot",
 		gold_ingot 											= va .. "gold_ingot",
 		cobblestone											= va .. "cobblestone",
+		iron_ore											= va .. "iron_ore",
+		coal_ore											= va .. "coal_ore",
+		copper_ore											= va .. "copper_ore",
+		raw_copper											= va .. "raw_copper",
+		gold_ore											= va .. "gold_ore",
+		raw_gold											= va .. "raw_gold",
+		redstone_ore										= va .. "redstone_ore",
 		redstone											= va .. "redstone",
 		gravel												= va .. "gravel",
 		sand												= va .. "sand",
 		clay												= va .. "clay",
+		clay_ball											= va .. "clay_ball",
+		coal												= va .. "coal",
 		glass												= va .. "glass",
 		glass_pane											= va .. "glass_pane",
 		paper												= va .. "paper",
 		hopper												= va .. "hopper",
+		lapis_ore											= va .. "lapis_ore",
 		lapis_lazuli										= va .. "lapis_lazuli",
+		diamond_ore											= va .. "diamond_ore",
 		diamond												= va .. "diamond",
+		emerald_ore											= va .. "emerald_ore",
 		emerald												= va .. "emerald",
 		ender_pearl											= va .. "ender_pearl",
 		gunpowder											= va .. "gunpowder",
 		glowstone											= va .. "glowstone",
 		glowstone_dust										= va .. "glowstone_dust",
 		flint												= va .. "flint",
+		netherrack											= va .. "netherrack",
+		blackstone 											= va .. "blackstone",
+		basalt 												= va .. "basalt",
+		soul_soil 											= va .. "soul_soil",
+		magma_block 										= va .. "magma_block",
+		soul_sand 											= va .. "soul_sand",
+		ancient_debris 										= va .. "ancient_debris",
+		nether_quartz_ore 									= va .. "nether_quartz_ore",
+		nether_gold_ore 									= va .. "nether_gold_ore",
 	--
 	-- Tech Reborn things
 		refined_iron_ingot 									= tr .. "refined_iron_ingot",
@@ -52,6 +75,17 @@ Dict.Item = {
 		cinnabar_ore										= tr .. "cinnabar_ore",
 		pyrite_ore											= tr .. "pyrite_ore",
 		sphalerite_ore										= tr .. "sphalerite_ore",
+		silver_ore											= tr .. "silver_ore",
+		galena_ore											= tr .. "galena_ore",
+		ruby_ore											= tr .. "ruby_ore",
+		sapphire_ore										= tr .. "sapphire_ore",
+		sapphire_dust										= tr .. "sapphire_dust",
+		sheldonite_ore 										= tr .. "sheldonite_ore",
+		peridot_ore											= tr .. "peridot_ore",
+		peridot_dust										= tr .. "peridot_dust",
+		sodalite_ore 										= tr .. "sodalite_ore",
+		sodalite_dust										= tr .. "sodalite_dust",
+		magnesium_dust										= tr .. "magnesium_dust",
 	--
 	-- Others
 		limestone 											= cr .. "limestone",
@@ -62,6 +96,10 @@ Dict.Item = {
 		emeraldite_ore										= by .. "emeraldite_ore",
 		pendorite_ore										= by .. "pendorite_ore",
 		anthracite_ore										= by .. "anthracite_ore",
+		certus_quartz_crystal								= ae .. "certus_quartz_crystal",
+		certus_quartz_dust									= ae .. "certus_quartz_dust",
+		fluix_crystal										= ae .. "fluix_crystal",
+		fluix_dust											= ae .. "fluix_dust",
 	--
 	-- MI things (too much)
 		acetylene_bucket 								= mi .. "acetylene_bucket",
@@ -1216,16 +1254,73 @@ Dict.MatType = {
 	le_uranium = "le_uranium",
 }
 
+-- Value is reserved for future use.
 Dict.DirectProd = {
-	[F.water]							= Dict.STORE_FOREVER,
+	-- Liquid air
+	[F.liquid_air]						= true,
+
+	-- Oil Drilling Rig
+	[F.lava]							= true,
+	[F.salt_water]						= true,
+	[F.crude_oil]						= true,
+	[F.shale_oil]						= true,
+	[F.water]							= true,
 
 	-- Bronze Drill
+	[I.iron_ore]						= true,
+	[I.coal_ore]						= true,
+	[I.lignite_coal_ore]				= true,
+	[I.copper_ore]						= true,
+	[I.tin_ore]							= true,
+	[I.gold_ore]						= true,
+	[I.lead_ore]						= true,
+	[I.redstone_ore]					= true,
+	[I.silver_ore]						= true,
+	[I.galena_ore]						= true,
 
 	-- Gold Drill
+	[I.netherrack]						= true,
+	[I.blackstone]						= true,
+	[I.basalt]							= true,
+	[I.soul_soil]						= true,
+	[I.magma_block]						= true,
+	[I.soul_sand]						= true,
+	[I.ancient_debris]					= true,
+	[I.glowstone]						= true,
+	[I.nether_quartz_ore]				= true,
+	[I.nether_gold_ore]					= true,
+	[I.emeraldite_ore]					= true,
+	[I.pendorite_ore]					= true,
+	[I.anthracite_ore]					= true,
+	[I.cinnabar_ore]					= true,
+	[I.pyrite_ore]						= true,
+	[I.sphalerite_ore]					= true,
 	
 	-- Steel Drill
+	[I.antimony_ore]					= true,
+	[I.fluorite_ore]					= true,
+	[I.diamond_ore]						= true,
+	[I.lapis_ore]						= true,
+	[I.lead_ore]						= true,
+	[I.nickel_ore]						= true,
+	[I.bauxite_ore]						= true,
+	[I.salt_ore]						= true,
+	[I.emerald_ore]						= true,
+	[I.quartz_ore]						= true,
+	[I.ruby_ore]						= true,
+	[I.sapphire_ore]					= true,
 
-	-- Process Chains
+	-- Stainless Steel Drill
+	[I.titanium_ore]					= true,
+	[I.tungsten_ore]					= true,
+	[I.mozanite_ore]					= true,
+	[I.platinum_ore]					= true,
+	[I.sheldonite_ore]					= true,
+	[I.peridot_ore]						= true,
+
+	-- Titanium Drill
+	[I.uranium_ore]						= true,
+	[I.iridium_ore]						= true,
 }
 
 Dict.OddMaxCount = {

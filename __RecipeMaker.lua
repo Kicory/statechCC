@@ -10,11 +10,35 @@ end
 
 local Recipes = {}
 
-local consumables = {}
-local craftables = {}
+-- Mini class Recipe
+local Recipe = {
+	PRIO_ULTIMATE = 100,
+	PRIO_HIGH = 90,
+	PRIO_NORMAL = 80,
+	PRIO_LOW = 70,
+	PRIO_RELUCTANT = 60,
+}
 
-function Recipes.new(specs)
-	if (not specs.dispName) or (type(specs.dispName) ~= "string") then error("Recipe Display Name not specified!") return end
+local recipeMt = {
+	__index = Recipe
+}
+
+function Recipe:new(o)
+	assert(o ~= nil)
+	setmetatable(o, recipeMt)
+	return o
+end
+
+function Recipe:setPriority(prio)
+	self.priority = prio
+	return self
+end
+
+--- Add to Recipes list
+---@param specs table Recipe info
+---@return table Added Recipe (Can be customized)
+function Recipes.add(specs)
+	if (not specs.dispName) or (type(specs.dispName) ~= "string") then error("Recipe Display Name not specified!:" .. debug.traceback()) return end
 
 	local dispName = specs.dispName
 
@@ -24,22 +48,20 @@ function Recipes.new(specs)
 	if not specs.minimumPower then error("No machine minimum power requirement: " .. dispName) return end
 
 	local order = #Recipes + 1
-	Recipes[order] = {
+	local r = Recipe:new {
 		-- Lower comes first
 		rank = order,
+		priority = Recipe.PRIO_NORMAL,
 		dispName = specs.dispName,
 		unitInput = specs.unitInput,
 		unitOutput = specs.unitOutput,
 		machineType = specs.machineType,
 		minimumPower = specs.minimumPower,
 	}
+	Recipes[order] = r
 
-	for id in pairs(Helper.IO2Catalogue(specs.unitInput)) do
-		consumables[id] = true
-	end
-	for id in pairs(Helper.IO2Catalogue(specs.unitOutput)) do
-		craftables[id] = true
-	end
+	-- Return r to customize later
+	return r
 end
 
 function Recipes.getMaterialsUsedEmptyCtlg()
@@ -61,16 +83,12 @@ function Recipes.getMaterialsUsedEmptyCtlg()
 	return ret
 end
 
-function Recipes.isCraftable(id)
-	return (craftables[id] ~= nil)
-end
-
 --- Make basic compressor recipes. [ingot ID, double ingot ID, plate ID, curved plate ID, rod ID, ring ID]. Give "false" if there is no corresponding item.
 function Recipes.makeCompressorRecipesBasic(...)
 	local ps = table.pack(...)
 	local function addOne(inputID, outputID, outputCnt, dispNamePostfix)
 		if inputID and outputID then
-			Recipes.new {
+			Recipes.add {
 				dispName = Helper.dispNameMaker(outputID) .. dispNamePostfix,
 				unitInput = {
 					item = {
@@ -107,7 +125,7 @@ function Recipes.makeCompressorRecipesCustom(...)
 	for idx = 1, #ps, 2 do
 		local fromID = ps[idx]
 		local toID = ps[idx + 1]
-		Recipes.new {
+		Recipes.add {
 			dispName = Helper.dispNameMaker(toID),
 			unitInput = {
 				item = {
@@ -133,7 +151,7 @@ function Recipes.makeCutterRodRecipes(...)
 		local fromDoubleID = ps[idx + 1]
 		local toID = ps[idx + 2]
 		if fromDoubleID then
-			Recipes.new {
+			Recipes.add {
 				dispName = Helper.dispNameMaker(toID) .. " from Double",
 				unitInput = {
 					item = {
@@ -153,7 +171,7 @@ function Recipes.makeCutterRodRecipes(...)
 			}
 		end
 		if fromID then
-			Recipes.new {
+			Recipes.add {
 				dispName = Helper.dispNameMaker(toID),
 				unitInput = {
 					item = {
@@ -182,7 +200,7 @@ function Recipes.makePackerBladeRecipes(...)
 		local curvedID = ps[idx]
 		local rodID = ps[idx + 1]
 		local bladeID = ps[idx + 2]
-		Recipes.new {
+		Recipes.add {
 			dispName = Helper.dispNameMaker(bladeID) .. " with Packer",
 			unitInput = {
 				item = {
@@ -208,7 +226,7 @@ function Recipes.makeAssemGearRecipes(...)
 		local plateID = ps[idx]
 		local ringID = ps[idx + 1]
 		local gearID = ps[idx + 2]
-		Recipes.new {
+		Recipes.add {
 			dispName = Helper.dispNameMaker(gearID) .. " with Assembler",
 			unitInput = {
 				item = {
@@ -239,7 +257,7 @@ function Recipes.makeAssemDrillHeadRecipes(...)
 		local rodID = ps[idx + 2]
 		local gearID = ps[idx + 3]
 		local dhID = ps[idx + 4]
-		Recipes.new {
+		Recipes.add {
 			dispName = Helper.dispNameMaker(dhID) .. " with Assembler",
 			unitInput = {
 				item = {
@@ -270,7 +288,7 @@ function Recipes.makeAssemRotorRecipes(...)
 		local bladeID = ps[idx]
 		local ringID = ps[idx + 1]
 		local rotorID = ps[idx + 2]
-		Recipes.new {
+		Recipes.add {
 			dispName = Helper.dispNameMaker(rotorID) .. " with Assembler",
 			unitInput = {
 				item = {
@@ -300,7 +318,7 @@ function Recipes.makeWiremillRecipes(...)
 		local wireID = ps[idx + 1]
 		local fineWireID = ps[idx + 2]
 		if wireID then
-			Recipes.new {
+			Recipes.add {
 				dispName = Helper.dispNameMaker(wireID),
 				unitInput = {
 					item = {
@@ -317,7 +335,7 @@ function Recipes.makeWiremillRecipes(...)
 			}
 		end
 		if wireID and fineWireID then
-			Recipes.new {
+			Recipes.add {
 				dispName = Helper.dispNameMaker(fineWireID),
 				unitInput = {
 					item = {
@@ -371,7 +389,7 @@ function Recipes.makeMixerDustRecipes(ps)
 	end
 	
 	local function addOne(inputs, outputs, name)
-		Recipes.new {
+		Recipes.add {
 			dispName = name .. " from Mixer",
 			unitInput = inputs,
 			unitOutput = outputs,
@@ -414,6 +432,7 @@ end
 
 --- Make single recipe. [ID], [amt], [ID], [amt], nil, [ID], [amt], ...
 --- [Item inputs], nil, [Fluid Inputs], nil, [Item outputs], nil, [Fluid outputs], nil, [DispName], [minimum Power]
+--- @return table Added recipe
 function Recipes.makeSingleMixerRecipe(...)
 	local ps = table.pack(...)
 	local r = getRecipeTemplate(Machine.electric_mixer)
@@ -426,11 +445,12 @@ function Recipes.makeSingleMixerRecipe(...)
 	r.dispName = ps[idx]
 	idx = idx + 1
 	r.minimumPower = ps[idx]
-	Recipes.new(r)
+	return Recipes.add(r)
 end
 
 --- Make single recipe. [ID], [amt], [ID], [amt], nil, [ID], [amt], ...
 --- [Item inputs], nil, [Fluid Inputs], nil, [Item outputs], nil, [Fluid outputs], nil, [DispName], [minimum Power]
+--- @return	table Added recipe
 function Recipes.makeSingleCentrifugeRecipe(...)
 	local ps = table.pack(...)
 	local r = getRecipeTemplate(Machine.centrifuge)
@@ -443,7 +463,43 @@ function Recipes.makeSingleCentrifugeRecipe(...)
 	r.dispName = ps[idx]
 	idx = idx + 1
 	r.minimumPower = ps[idx]
-	Recipes.new(r)
+	return Recipes.add(r)
 end
 
-return Recipes
+--- Make single recipe. [ID], [amt], [ID], [amt], nil, [ID], [amt], ...
+--- [Item inputs], nil, [Item outputs], nil, [DispName], [minimum Power]
+--- @return	table Added recipe
+function Recipes.makeSingleMaceratorRecipe(...)
+	local ps = table.pack(...)
+	local r = getRecipeTemplate(Machine.electric_macerator)
+	local idx = 1
+	idx = doSingleIO(ps, r.unitInput.item, idx)
+	idx = doSingleIO(ps, r.unitOutput.item, idx)
+	r.dispName = ps[idx]
+	idx = idx + 1
+	r.minimumPower = ps[idx]
+	return Recipes.add(r)
+end
+
+--- Make single recipe. [ID], [amt], [ID], [amt], nil, [ID], [amt], ...
+--- [Item inputs], nil, [Fluid Inputs], nil, [Item outputs], nil, [Fluid outputs], nil, [DispName], [minimum Power]
+--- @return	table Added recipe
+function Recipes.makeSingleElectrolyzerRecipe(...)
+	local ps = table.pack(...)
+	local r = getRecipeTemplate(Machine.electrolyzer)
+	
+	local idx = 1
+	idx = doSingleIO(ps, r.unitInput.item, idx)
+	idx = doSingleIO(ps, r.unitInput.fluid, idx)
+	idx = doSingleIO(ps, r.unitOutput.item, idx)
+	idx = doSingleIO(ps, r.unitOutput.fluid, idx)
+	r.dispName = ps[idx]
+	idx = idx + 1
+	r.minimumPower = ps[idx]
+	return Recipes.add(r)
+end
+
+return {
+	Recipes = Recipes, 
+	Recipe = Recipe
+}
