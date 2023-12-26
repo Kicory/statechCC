@@ -5,16 +5,13 @@ local BigMachines = {
 		["modern_industrialization:mega_smelter_1"] = {
 			wrapped = nil, -- will filled by __Machines.refreshMachines
 
-			hasFluid = false,
+			hasFluid = false, -- Only consider input hatches
 			fluidInputs = {
 				
 			},
-			fluidOutputs = {
-
-			},
-			hasItem = true,
-			itemInput = "modern_industrialization:bronze_item_input_hatch_1",
-			itemOutput = "modern_industrialization:bronze_item_output_hatch_1",
+			hasItem = true, -- Only consider input hatches
+			itemInput = "modern_industrialization:bronze_item_input_hatch_1", 
+			-- No need to contain output hatches; Chef will auto-detect all output hatches.
 			
 			getBasePower = nil, -- will filled by __Machines.refreshMachines
 			isBusy = nil, -- will filled by __Machines.refreshMachines
@@ -29,14 +26,8 @@ local BigMachines = {
 	 			"modern_industrialization:highly_advanced_fluid_input_hatch_2",
 	 			"modern_industrialization:highly_advanced_fluid_input_hatch_3",
 	 		},
-	 		fluidOutputs = {
-	 			"modern_industrialization:advanced_fluid_output_hatch_0",
-	 			"modern_industrialization:advanced_fluid_output_hatch_1",
-	 			"modern_industrialization:advanced_fluid_output_hatch_2",
-	 		},
 	 		hasItem = true,
 	 		itemInput = "modern_industrialization:advanced_item_input_hatch_0",
-	 		itemOutput = "modern_industrialization:advanced_item_output_hatch_0",
 	 	}
 	}
 	--]]

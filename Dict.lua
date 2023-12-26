@@ -1191,6 +1191,19 @@ Dict.Machine = {
 	alloy_smelter = I.alloy_smelter,
 }
 
+Dict.OutputHatchList = {
+	I.bronze_item_output_hatch,
+	I.bronze_fluid_output_hatch,
+	I.steel_item_output_hatch,
+	I.steel_fluid_output_hatch,
+	I.advanced_item_output_hatch,
+	I.advanced_fluid_output_hatch,
+	I.turbo_item_output_hatch,
+	I.turbo_fluid_output_hatch,
+	I.highly_advanced_item_output_hatch,
+	I.highly_advanced_fluid_output_hatch,
+}
+
 Dict.MultiblockMachine = {
 	smelterMega = I.mega_smelter,
 	chemicalReactorLarge = I.large_chemical_reactor,

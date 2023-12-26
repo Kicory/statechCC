@@ -4,11 +4,14 @@ local TH = require("__ThreadingHelpers")
 local Helper = require("__Helpers")
 local Ctlg = require("__Catalouge")
 local St = require("__Storage")
-local Fluid = require("Dict").Fluid
-local Item = require("Dict").Item
-local Machine = require("Dict").Machine
-local PpType = require("Dict").PpType
-local OddMaxCount = require("Dict").OddMaxCount
+local Dict = require("Dict")
+
+local Fluid = Dict.Fluid
+local Item = Dict.Item
+local Machine = Dict.Machine
+local OutputHatchList = Dict.OutputHatchList
+local PpType = Dict.PpType
+local OddMaxCount = Dict.OddMaxCount
 
 
 local M = {}
@@ -22,6 +25,10 @@ local maxTryWhenEmpty = 2
 local function refreshMachines()
 	local singleBlockMachineTypes = {}
 	for _, v in pairs(Machine) do
+		singleBlockMachineTypes[#singleBlockMachineTypes + 1] = v
+	end
+	
+	for _, v in ipairs(OutputHatchList) do
 		singleBlockMachineTypes[#singleBlockMachineTypes + 1] = v
 	end
 
@@ -38,7 +45,7 @@ local function refreshMachines()
 		info.hasItem = peripheral.hasType(machineName, PpType.itemStorage)
 
 		if (peripheral.hasType(machineName, PpType.miCrafter)) then
-			info.getBasePower = function() return machineWrapped.getCraftingInformation().maxRecipeCost end
+			info.getCraftingInfo = machineWrapped.getCraftingInformation
 			info.isBusy = machineWrapped.isBusy
 		end
 		-- Multi-block machines do not have this field
@@ -64,7 +71,7 @@ local function refreshMachines()
 		machineNames[machineType] = {}
 		for machineName, info in pairs(bigMachinesOfType) do
 			info.wrapped = peripheral.wrap(machineName)
-			info.getBasePower = function() return info.wrapped.getCraftingInformation().maxRecipeCost end
+			info.getCraftingInfo = info.wrapped.getCraftingInformation
 			info.isBusy = info.wrapped.isBusy
 			machineList[machineType][machineName] = info
 			table.insert(machineNames[machineType], machineName)
@@ -282,7 +289,11 @@ local function prepareFactoryStatus()
 		return tankInfo
 	end
 	local function getMachineCraftingInfo(info)
-		return info.wrapped.getCraftingInformation()
+		if info.getCraftingInfo then
+			return info.getCraftingInfo()
+		else
+			return {}
+		end
 	end
 	local function paraCost(info, totalPullCnts)
 		local ret = 0
@@ -384,20 +395,16 @@ function M.makeFactoryCraftSchedule(craftReqs, afterFeedCtlg)
 	return resultSchedule, lackingStatus, machineLackingStatus
 end
 ----------------------------------------------
---- Do one 'pullFluid' and one 'pullItem' on each machine, including multiblock machines
+--- Do one 'pullFluid' and one 'pullItem' on each machine, including all multiblock output hatches
 --- This is for pulling leftover products 'slowly', as scheduler only 'pulls' when the machine has thing to craft.
 --- Obeys 'paraCostLimit'.
 ---@param bufferAE table
 function M.harvestToBufferSlow()
-	
 	local function paraCost(info)
 		local ret = 0
 		if info.singleBlockMachineName then
 			if info.hasItem then ret = ret + 1 end
 			if info.hasFluid then ret = ret + 1 end
-		else
-			if info.hasItem then ret = ret + 1 end
-			if info.hasFluid then ret = ret + #info.fluidOutputs end
 		end
 		return ret
 	end
@@ -421,13 +428,6 @@ function M.harvestToBufferSlow()
 				end
 				if info.hasFluid then
 					bufferPullers[#bufferPullers + 1] = function() pullFluid(mn) end
-				end
-			else
-				if info.hasItem then
-					bufferPullers[#bufferPullers + 1] = function() pullItem(info.itemOutput) end
-				end
-				if info.hasFluid then
-					bufferPullers[#bufferPullers + 1] = function() TH.paraForNoResults(function(_, hatchName) pullFluid(hatchName) end, ipairs(info.fluidOutputs)) end
 				end
 			end
 

@@ -93,16 +93,19 @@ function Helper.printRowOf(widthRatios, backColors, textColors, contents, monito
 end
 
 function Helper.dispNameMaker(id)
-	local colonPos, _ = string.find(id, ':')
-	local unColoned
+	local colonEnd, electricEnd, _
 	
-	if colonPos then
-		unColoned = string.sub(id, colonPos + 1, #id)
-	else
-		unColoned = id
+	_, colonEnd = string.find(id, ':')
+	if colonEnd then
+		id = string.sub(id, colonEnd + 1)
+	end
+	
+	_, electricEnd = string.find(id, "electric")
+	if electricEnd then
+		id = string.sub(id, electricEnd + 2)
 	end
 
-	return string.gsub('_' .. unColoned, "_(.)", function(c) return ' ' .. string.upper(c) end):sub(2)
+	return string.gsub('_' .. id, "_(.)", function(c) return ' ' .. string.upper(c) end):sub(2)
 end
 
 function Helper.makeMultipliedIO(io, factor)
