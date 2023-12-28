@@ -1,3 +1,4 @@
 .cosu.conf
 cosu.lua
 tmp*
+.vscode

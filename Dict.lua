@@ -37,6 +37,8 @@ Dict.Item = {
 		sand												= va .. "sand",
 		clay												= va .. "clay",
 		clay_ball											= va .. "clay_ball",
+		brick												= va .. "brick",
+		stone												= va .. "stone",
 		coal												= va .. "coal",
 		glass												= va .. "glass",
 		glass_pane											= va .. "glass_pane",
@@ -86,20 +88,28 @@ Dict.Item = {
 		sodalite_ore 										= tr .. "sodalite_ore",
 		sodalite_dust										= tr .. "sodalite_dust",
 		magnesium_dust										= tr .. "magnesium_dust",
+		advanced_alloy_ingot								= tr .. "advanced_alloy_ingot",
+		mixed_metal_ingot									= tr .. "mixed_metal_ingot",
+		brass_dust											= tr .. "brass_dust",
+		brass_ingot											= tr .. "brass_ingot",
 	--
 	-- Others
-		limestone 											= cr .. "limestone",
-		calorite_ingot										= ad .. "calorite_ingot",
-		calorite_plate										= ad .. "calorite_plate",
-		desh_ingot											= ad .. "desh_ingot",
-		desh_plate											= ad .. "desh_plate",
-		emeraldite_ore										= by .. "emeraldite_ore",
-		pendorite_ore										= by .. "pendorite_ore",
-		anthracite_ore										= by .. "anthracite_ore",
-		certus_quartz_crystal								= ae .. "certus_quartz_crystal",
-		certus_quartz_dust									= ae .. "certus_quartz_dust",
-		fluix_crystal										= ae .. "fluix_crystal",
-		fluix_dust											= ae .. "fluix_dust",
+		limestone 										= cr .. "limestone",
+		calorite_ingot									= ad .. "calorite_ingot",
+		calorite_plate									= ad .. "calorite_plate",
+		desh_ingot										= ad .. "desh_ingot",
+		desh_plate										= ad .. "desh_plate",
+		ostrum_ingot									= ad .. "ostrum_ingot",
+		raw_calorite									= ad .. "raw_calorite",
+		raw_desh										= ad .. "raw_desh",
+		raw_ostrum										= ad .. "raw_ostrum",
+		emeraldite_ore									= by .. "emeraldite_ore",
+		pendorite_ore									= by .. "pendorite_ore",
+		anthracite_ore									= by .. "anthracite_ore",
+		certus_quartz_crystal							= ae .. "certus_quartz_crystal",
+		certus_quartz_dust								= ae .. "certus_quartz_dust",
+		fluix_crystal									= ae .. "fluix_crystal",
+		fluix_dust										= ae .. "fluix_dust",
 	--
 	-- MI things (too much)
 		acetylene_bucket 								= mi .. "acetylene_bucket",
@@ -1061,6 +1071,7 @@ Dict.Item = {
 		zinc_ring 										= mi .. "zinc_ring",
 		zinc_rod 										= mi .. "zinc_rod",
 		zinc_tiny_dust 									= mi .. "zinc_tiny_dust",
+	--
 }
 
 Dict.Fluid = {

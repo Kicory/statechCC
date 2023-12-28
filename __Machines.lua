@@ -141,10 +141,7 @@ local function fluidFitsTankCount(tankInfo, fluidID, amt)
 	end
 	return 0
 end
---- Returns true if the machine can accept unit input of recipe.
----@param recipe table Recipe to check
----@param info table machineInfo
----@return boolean
+
 local function inputFitCount(input, storageInfo, tankInfo)
 	local fitCounts = nil
 
@@ -364,8 +361,6 @@ function M.init()
 	refreshMachines()
 end
 --------------------------------------------
----@param recipesList table Recipes to check fit in
----@return table
 function M.makeFactoryCraftSchedule(craftReqs, afterFeedCtlg)
 	assert(afterFeedCtlg ~= nil)
 	
@@ -398,7 +393,6 @@ end
 --- Do one 'pullFluid' and one 'pullItem' on each machine, including all multiblock output hatches
 --- This is for pulling leftover products 'slowly', as scheduler only 'pulls' when the machine has thing to craft.
 --- Obeys 'paraCostLimit'.
----@param bufferAE table
 function M.harvestToBufferSlow()
 	local function paraCost(info)
 		local ret = 0
@@ -485,6 +479,7 @@ end
 ---@param scd table Schedule
 ---@param fromAE table Source of item/fluids
 ---@return table "fed" = Catalogue of all fed materials // "expected" = Catalogue of expected outputs
+---@return table expectedOutputs
 function M.feedFactory(scd, fromAE)
 	local fedCtlg = Ctlg:new()
 	local expectedOutputCtlg = Ctlg:new()

@@ -29,7 +29,7 @@ local _XXXXXXXXXXXXXXXX = 512
 local _XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX = 1024
 local _XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX = 2048
 
-if true then
+if false then
 	-- Producers
 	goalMaker {
 		[I.copper_drill]					= _X,
@@ -42,7 +42,7 @@ if true then
 		[I.stainless_steel_drill]			= _X,
 	}
 
-	-- Primitive crushed ores & raw ores & (tiny) dusts
+	-- Primitive crushed ores & raw ores & big dusts
 	goalMaker {
 		-- Bronze Drill
 		[I.raw_iron]						= _XXXXXXXX,
@@ -95,7 +95,6 @@ if true then
 		[I.raw_titanium]					= _XXXX,
 		[I.raw_tungsten]					= _XXXX,
 		[I.tungsten_dust]					= _XXXX,
-		[I.tungsten_tiny_dust]				= _XXXXXXXXXXXXXXXX,
 		[I.mozanite_crushed_dust]			= _XXXXXXXX,
 		[I.mozanite_dust]					= _XXXXXXXX,
 		[I.raw_platinum]					= _XXXX,
@@ -120,6 +119,21 @@ if true then
 		[I.stainless_steel_dust]			= _XXXX,
 		[I.uncooked_steel_dust]				= _XXXX,
 		[I.superconductor_dust]				= _XXXX,
+	}
+
+	-- Tiny dusts (whether useful or tiny form is main product)
+	goalMaker {
+		[I.platinum_tiny_dust]				= _XXXXXXXX, -- Main product & useful
+		[I.chromium_tiny_dust]				= _XXXXXXXX, -- Main product & useful
+		[I.manganese_tiny_dust]				= _XXXXXXXX, -- Main product
+
+		[I.lead_tiny_dust]					= _XXXXXXXX, -- (Very) useful
+		[I.beryllium_tiny_dust]				= _XXXX, -- Useful
+		[I.tungsten_tiny_dust]				= _XXXX, -- Useful
+		[I.antimony_tiny_dust]				= _XXXX, -- Useful
+		[I.aluminum_tiny_dust]				= _XXXX, -- Useful
+		[I.iridium_tiny_dust]				= _XX, -- Useful (Monocrystalline Silicon)
+		[I.nickel_tiny_dust]				= _XX, -- (Not really) useful
 	}
 
 	-- Ingots
@@ -321,7 +335,7 @@ if true then
 	}
 else
 	Goals = Ctlg:new {
-		[I.copper_ingot] = 31
+		[I.bronze_dust] = 64
 	}
 end
 return Goals

@@ -1,7 +1,6 @@
 local DispName = require("Dict").DispName
 local DirectProd = require("Dict").DirectProd
 local StorageSystems = require("Enviornment")
-local TH = require("__ThreadingHelpers")
 local Helper = require("__Helpers")
 local Ctlg = require("__Catalouge")
 local Recipes = require("Recipes")
@@ -24,12 +23,6 @@ local function findStorageSystems()
 	St.mainAE = peripheral.wrap(StorageSystems.main)
 	St.BufferStorages = StorageSystems.BufferStorages
 	St.BufferTanks = StorageSystems.BufferTanks
-end
-
-local function recipeManagerCoroutine(recipe)
-	while true do
-
-	end
 end
 -----------------------------------
 function St.init()
@@ -64,7 +57,7 @@ function St.getCatalogueCopy()
 end
 
 --- Try consume material from catalogue given.
----@param ctlg table
+---@param availableCtlg table Catalogue
 ---@param toUse table Materials to use, in unitInput format
 ---@param limit integer Maximum units to use.
 ---@return integer count of units successfully used
@@ -82,7 +75,7 @@ function St.tryUse(availableCtlg, toUse, limit)
 		local used = Helper.IO2Catalogue(Helper.makeMultipliedIO(toUse, result))
 		availableCtlg:inPlaceSub(used, Ctlg.ERROR_ON_NEW_KEY)
 	end
-	
+
 	return result, lacksCtlg
 end
 -----------------------------------
@@ -129,7 +122,7 @@ end
 function St.printStatusToMonitor(goalsCtlg, lackStatus, machineLackStatus, moni)
 	moni.clear()
 	moni.setCursorPos(1, 1)
-	
+
 	local backColors = {colors.pink, colors.lightBlue, colors.pink}
 	local textColors = {colors.red, colors.black, colors.red}
 
@@ -147,7 +140,7 @@ function St.printStatusToMonitor(goalsCtlg, lackStatus, machineLackStatus, moni)
 			Helper.printRowOf({1/3, 1/3, 1/3}, backColors, textColors, content, moni)
 		end
 	end
-	
+
 	-- Lack raw material (should increase raw material production)
 	do
 		Helper.printRowOf({1}, {colors.black}, {colors.white}, {"  Lacking Raw Materials"}, moni)

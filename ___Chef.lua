@@ -23,7 +23,7 @@ function Chef.step(prevLackingStatus, prevMachineLackingStatus)
 
 	local craftRequirements = St.getRequirements(Recipes, GoalsCtlg)
 
-	M.harvestToBufferSlow(St.bufferAE)
+	M.harvestToBufferSlow()
 	local factoryScd, lackingStatus, machineLackingStatus = M.makeFactoryCraftSchedule(craftRequirements, St.getCatalogueCopy())
 
 	os.sleep(0.01)	-- 1 tick for AE system to prepare.
@@ -44,7 +44,7 @@ function Chef.step(prevLackingStatus, prevMachineLackingStatus)
 		end
 		while rs.getInput("left") do
 			os.sleep(0.1)
-			M.harvestToBufferSlow(St.bufferAE)
+			M.harvestToBufferSlow()
 			os.sleep(0.01)
 			-- Pulling back outputs from factory should not stop
 			St.applyHarvestedCatalogue(M.harvestFromBuffer(St.bufferAE, St.BufferStorages, St.BufferTanks, St.mainAE))
