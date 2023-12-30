@@ -84,12 +84,16 @@ function St.getRequirements(wholeRecipes, goalsCtlg)
 	local craftRequirements = {}
 
 	local function getRequiredUnit(recipe)
-		return -((-requiredCtlg) / Helper.IO2Catalogue(recipe.unitOutput))
+		if recipe.alwaysProc then
+			return catalogue / Helper.IO2Catalogue(recipe.unitInput)
+		else
+			return -((-requiredCtlg) / recipe.effUnitOutputCtlg)
+		end
 	end
 
 	for _, recipe in ipairs(wholeRecipes) do
 		local unitCount = getRequiredUnit(recipe)
-		if unitCount ~= 0 then
+		if unitCount > 0 then
 			craftRequirements[#craftRequirements + 1] = {
 				recipe = recipe,
 				required = unitCount,

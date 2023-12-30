@@ -40,8 +40,12 @@ Dict.Item = {
 		brick												= va .. "brick",
 		stone												= va .. "stone",
 		coal												= va .. "coal",
+		spruce_log											= va .. "spruce_log",
+		charcoal											= va .. "charcoal",
 		glass												= va .. "glass",
 		glass_pane											= va .. "glass_pane",
+		glass_bottle										= va .. "glass_bottle",
+		sugar_cane											= va .. "sugar_cane",
 		paper												= va .. "paper",
 		hopper												= va .. "hopper",
 		lapis_ore											= va .. "lapis_ore",
@@ -64,6 +68,9 @@ Dict.Item = {
 		ancient_debris 										= va .. "ancient_debris",
 		nether_quartz_ore 									= va .. "nether_quartz_ore",
 		nether_gold_ore 									= va .. "nether_gold_ore",
+		blaze_powder										= va .. "blaze_powder",
+		ender_eye											= va .. "ender_eye",
+		nether_star											= va .. "nether_star",
 	--
 	-- Tech Reborn things
 		refined_iron_ingot 									= tr .. "refined_iron_ingot",
@@ -92,6 +99,11 @@ Dict.Item = {
 		mixed_metal_ingot									= tr .. "mixed_metal_ingot",
 		brass_dust											= tr .. "brass_dust",
 		brass_ingot											= tr .. "brass_ingot",
+		synthetic_redstone_crystal							= tr .. "synthetic_redstone_crystal",
+		tungstensteel_hot_ingot								= tr .. "hot_tungstensteel_ingot",
+		advanced_alloy_plate								= tr .. "advanced_alloy_plate",
+		iridium_alloy_ingot									= tr .. "iridium_alloy_ingot",
+		iridium_alloy_plate									= tr .. "iridium_alloy_plate",
 	--
 	-- Others
 		limestone 										= cr .. "limestone",
@@ -103,6 +115,8 @@ Dict.Item = {
 		raw_calorite									= ad .. "raw_calorite",
 		raw_desh										= ad .. "raw_desh",
 		raw_ostrum										= ad .. "raw_ostrum",
+		ice_shard										= ad .. "ice_shard",
+		moon_sand										= ad .. "moon_sand",
 		emeraldite_ore									= by .. "emeraldite_ore",
 		pendorite_ore									= by .. "pendorite_ore",
 		anthracite_ore									= by .. "anthracite_ore",
@@ -110,6 +124,13 @@ Dict.Item = {
 		certus_quartz_dust								= ae .. "certus_quartz_dust",
 		fluix_crystal									= ae .. "fluix_crystal",
 		fluix_dust										= ae .. "fluix_dust",
+		basic_card										= ae .. "basic_card",
+		advanced_card									= ae .. "advanced_card",
+		core_fragment									= "kubejs:core_fragment",
+		enderman_model									= "kubejs:enderman_model",
+		witch_model										= "kubejs:witch_model",
+		wither_skeleton_model							= "kubejs:wither_skeleton_model",
+		withered_bone									= "architects_palette:withered_bone",
 	--
 	-- MI things (too much)
 		acetylene_bucket 								= mi .. "acetylene_bucket",
@@ -1200,6 +1221,7 @@ Dict.Machine = {
 	chemical_reactor = I.chemical_reactor,
 	polarizer = I.polarizer,
 	alloy_smelter = I.alloy_smelter,
+	laser_engraver = I.laser_engraver,
 }
 
 Dict.OutputHatchList = {
@@ -1218,6 +1240,20 @@ Dict.OutputHatchList = {
 Dict.MultiblockMachine = {
 	smelterMega = I.mega_smelter,
 	chemicalReactorLarge = I.large_chemical_reactor,
+	industrialGreenhouse = I.greenhouse,
+	blastFurnaceCupr = I.electric_blast_furnace .. "_cupr",
+	blastFurnaceKant = I.electric_blast_furnace .. "_kant",
+	blastFurnaceTung = I.electric_blast_furnace .. "_tung",
+	pyrolyseOven = I.pyrolyse_oven,
+	vacuumFreezer = I.vacuum_freezer,
+	heatExchanger = I.heat_exchanger,
+	pressurizer = I.pressurizer,
+	implosionCompressor = I.implosion_compressor,
+	mobCrusher = I.mob_crusher,
+	nuclearReactor = I.nuclear_reactor,
+	fusionReactor = I.fusion_reactor,
+	coreMiningDrill = I.core_drill,	-- ONE recipe
+	bigComputer = I.singularity_forge,
 }
 
 Dict.PpType = {

@@ -251,7 +251,7 @@ local function makeCraftSchedule(req, states)
 	req.required = math.max(req.required - globalRequiredFullfilled, 0)
 
 	local mt = req.recipe.machineType
-	for _, mn in ipairs(machineNames[mt]) do
+	for _, mn in ipairs(machineNames[mt] or {}) do
 		markMachine(mn, machineList[mt][mn], req, states)
 	end
 end

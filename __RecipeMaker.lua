@@ -35,6 +35,22 @@ function Recipe:setPriority(prio)
 	return self
 end
 
+--- Only materials in idList will counted as output, and used when calculating required crafting
+function Recipe:setEffectiveOutput(...)
+	local ps = table.pack(...)
+	local set = {}
+	for _, v in ipairs(ps) do
+		set[v] = true
+	end
+	self.effUnitOutputCtlg:filter(function(id, _) return set[id] ~= nil end)
+	return self
+end
+
+function Recipe:setAlwaysProc()
+	self.alwaysProc = true
+	return self
+end
+
 --- Add to Recipes list
 ---@param specs table Recipe info
 ---@return table Added Recipe (Can be customized)
@@ -58,6 +74,11 @@ function Recipes.add(specs)
 		unitOutput = specs.unitOutput,
 		machineType = specs.machineType,
 		minimumPower = specs.minimumPower,
+		-- Outputs considered as result of this recipe when calculating required crafting.
+		-- e.g., hydrogen output from butadiene production should not considered as hydrogen production method.
+		effUnitOutputCtlg = Helper.IO2Catalogue(specs.unitOutput),
+		-- Schedule if there is input material.
+		alwaysProc = false,
 	}
 	Recipes[order] = r
 
@@ -117,30 +138,6 @@ function Recipes.makeCompressorRecipesBasic(...)
 		addOne(ingotID, plateID, 1, "")
 		addOne(plateID, curvedPlateID, 1, "")
 		addOne(rodID, ringID, 1, "")
-	end
-end
-
---- Make other compressor recipes. [inputID, outputID, output amount, minimum energy]. Give "false" if there is no corresponding item.
-function Recipes.makeCompressorRecipesCustom(...)
-	local ps = table.pack(...)
-	for idx = 1, #ps, 2 do
-		local fromID = ps[idx]
-		local toID = ps[idx + 1]
-		Recipes.add {
-			dispName = Helper.dispNameMaker(toID),
-			unitInput = {
-				item = {
-					[fromID] = 1
-				}
-			},
-			unitOutput = {
-				item = {
-					[toID] = 1
-				}
-			},
-			machineType = Machine.electric_compressor,
-			minimumPower = 2
-		}
 	end
 end
 
@@ -485,9 +482,10 @@ function Recipes.makeFurnaceRecipes(ps)
 	end
 end
 
-local function doSingleIO(ps, tab, idx)
+local function doSingleIO(ps, tab, idx, multiplier)
+	multiplier = multiplier or 1
 	while(ps[idx]) do
-		tab[ps[idx]] = ps[idx + 1]
+		tab[ps[idx]] = ps[idx + 1] * multiplier
 		idx = idx + 2
 	end
 	return idx + 1
@@ -507,13 +505,58 @@ local function getRecipeTemplate(mt)
 	}
 end
 
---- Make single recipe. [ID], [amt], [ID], [amt], nil, [ID], [amt], ...
---- [Item inputs], nil, [Fluid Inputs], nil, [Item outputs], nil, [Fluid outputs], nil, [DispName], [minimum Power]
---- @return table Added recipe
-function Recipes.makeSingleMixerRecipe(...)
-	local ps = table.pack(...)
-	local r = getRecipeTemplate(Machine.electric_mixer)
+--- Make single recipe maker
+---@param mt string Machine type
+---@param itemIn boolean
+---@param fluidIn boolean
+---@param itemOut boolean
+---@param fluidOut boolean
+function Recipes.makeSingleRecipeMaker(mt, itemIn, fluidIn, itemOut, fluidOut)
+	assert(mt ~= nil and itemIn ~= nil and fluidIn ~= nil and itemOut	~= nil and fluidOut ~= nil)
+	
+	return function(...)
+		local ps = table.pack(...)
+		local r = getRecipeTemplate(mt)
+	
+		local idx = 1
+		if itemIn then
+			idx = doSingleIO(ps, r.unitInput.item, idx)
+		end
+		if fluidIn then
+			idx = doSingleIO(ps, r.unitInput.fluid, idx)
+		end
+		if itemOut then
+			idx = doSingleIO(ps, r.unitOutput.item, idx)
+		end
+		if fluidOut then
+			idx = doSingleIO(ps, r.unitOutput.fluid, idx)
+		end
+		r.dispName = ps[idx]
+		idx = idx + 1
+		r.minimumPower = ps[idx]
+		return Recipes.add(r)
+	end
+end
 
+--- Make both single/large recipes. [ID], [amt], [ID], [amt], nil, [ID], [amt], ...
+--- [Item inputs], nil, [Fluid Inputs], nil, [Item outputs], nil, [Fluid outputs], nil, [DispName], [minimum Power]
+--- @return	table Added recipe (single)
+--- @return table Added recipe (large)
+function Recipes.makeSingleChemicalReactorRecipe(...)
+	local ps = table.pack(...)
+	local rBig = getRecipeTemplate(MultiMachine.chemicalReactorLarge)
+	local r = getRecipeTemplate(Machine.chemical_reactor)
+
+	local idxBig = 1
+	idxBig = doSingleIO(ps, rBig.unitInput.item, idxBig, 4)
+	idxBig = doSingleIO(ps, rBig.unitInput.fluid, idxBig, 4)
+	idxBig = doSingleIO(ps, rBig.unitOutput.item, idxBig, 4)
+	idxBig = doSingleIO(ps, rBig.unitOutput.fluid, idxBig, 4)
+	rBig.dispName = ps[idxBig] .. " Big"
+	idxBig = idxBig + 1
+	rBig.minimumPower = ps[idxBig] * 2
+	local bigRecipe = Recipes.add(rBig)
+	
 	local idx = 1
 	idx = doSingleIO(ps, r.unitInput.item, idx)
 	idx = doSingleIO(ps, r.unitInput.fluid, idx)
@@ -522,73 +565,9 @@ function Recipes.makeSingleMixerRecipe(...)
 	r.dispName = ps[idx]
 	idx = idx + 1
 	r.minimumPower = ps[idx]
-	return Recipes.add(r)
-end
+	local singleRecipe = Recipes.add(r)
 
---- Make single recipe. [ID], [amt], [ID], [amt], nil, [ID], [amt], ...
---- [Item inputs], nil, [Fluid Inputs], nil, [Item outputs], nil, [Fluid outputs], nil, [DispName], [minimum Power]
---- @return	table Added recipe
-function Recipes.makeSingleCentrifugeRecipe(...)
-	local ps = table.pack(...)
-	local r = getRecipeTemplate(Machine.centrifuge)
-
-	local idx = 1
-	idx = doSingleIO(ps, r.unitInput.item, idx)
-	idx = doSingleIO(ps, r.unitInput.fluid, idx)
-	idx = doSingleIO(ps, r.unitOutput.item, idx)
-	idx = doSingleIO(ps, r.unitOutput.fluid, idx)
-	r.dispName = ps[idx]
-	idx = idx + 1
-	r.minimumPower = ps[idx]
-	return Recipes.add(r)
-end
-
---- Make single recipe. [ID], [amt], [ID], [amt], nil, [ID], [amt], ...
---- [Item inputs], nil, [Item outputs], nil, [DispName], [minimum Power]
---- @return	table Added recipe
-function Recipes.makeSingleMaceratorRecipe(...)
-	local ps = table.pack(...)
-	local r = getRecipeTemplate(Machine.electric_macerator)
-	local idx = 1
-	idx = doSingleIO(ps, r.unitInput.item, idx)
-	idx = doSingleIO(ps, r.unitOutput.item, idx)
-	r.dispName = ps[idx]
-	idx = idx + 1
-	r.minimumPower = ps[idx]
-	return Recipes.add(r)
-end
-
---- Make single recipe. [ID], [amt], [ID], [amt], nil, [ID], [amt], ...
---- [Item inputs], nil, [Fluid Inputs], nil, [Item outputs], nil, [Fluid outputs], nil, [DispName], [minimum Power]
---- @return	table Added recipe
-function Recipes.makeSingleElectrolyzerRecipe(...)
-	local ps = table.pack(...)
-	local r = getRecipeTemplate(Machine.electrolyzer)
-
-	local idx = 1
-	idx = doSingleIO(ps, r.unitInput.item, idx)
-	idx = doSingleIO(ps, r.unitInput.fluid, idx)
-	idx = doSingleIO(ps, r.unitOutput.item, idx)
-	idx = doSingleIO(ps, r.unitOutput.fluid, idx)
-	r.dispName = ps[idx]
-	idx = idx + 1
-	r.minimumPower = ps[idx]
-	return Recipes.add(r)
-end
-
---- Make single recipe. [ID], [amt], [ID], [amt], nil, [ID], [amt], ...
---- [Item inputs], nil, [Item outputs], nil, [DispName], [minimum Power]
---- @return	table Added recipe
-function Recipes.makeSinglePolarizerRecipe(...)
-	local ps = table.pack(...)
-	local r = getRecipeTemplate(Machine.polarizer)
-	local idx = 1
-	idx = doSingleIO(ps, r.unitInput.item, idx)
-	idx = doSingleIO(ps, r.unitOutput.item, idx)
-	r.dispName = ps[idx]
-	idx = idx + 1
-	r.minimumPower = ps[idx]
-	return Recipes.add(r)
+	return singleRecipe, bigRecipe
 end
 
 return {

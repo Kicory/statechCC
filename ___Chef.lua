@@ -11,6 +11,19 @@ local moni
 function Chef.init()
 	M.init()
 	St.init()
+	-- Validate Recipes
+	for _, rec in ipairs(Recipes) do
+		if rec.alwaysProc then
+			local inputCtlg = Helper.IO2Catalogue(rec.unitInput)
+			for id in pairs(inputCtlg) do
+				if GoalsCtlg[id] ~= nil then
+					-- Always proc material has goal (which is not good)
+					print(Helper.dispNameMaker(id) .. "(" .. GoalsCtlg[id] .. ")" .. " is used in always-proc Recipe \"" .. rec.dispName .. "\"")
+					-- Just warn...
+				end
+			end
+		end
+	end
 	moni = peripheral.find("monitor")
 end
 

@@ -29,7 +29,7 @@ local _XXXXXXXXXXXXXXXX = 512
 local _XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX = 1024
 local _XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX = 2048
 
-if false then
+if true then
 	-- Producers
 	goalMaker {
 		[I.copper_drill]					= _X,
@@ -221,13 +221,13 @@ if false then
 		[I.bronze_gear]						= _XXXX,
 		[I.gold_gear]						= _X,
 		[I.aluminum_gear]					= _XXXX,
-		[I.tin_gear]						= _XXXX,
+		[I.tin_gear]						= _X, -- Minimum use
 		[I.iron_gear]						= _XXXX,
 		[I.invar_gear]						= _XXXX,
 		[I.steel_gear]						= _XXXX,
-		[I.calorite_gear]					= _XXXX,
+		[I.calorite_gear]					= _X, -- Minimum use
 		[I.desh_gear]						= _XXXX,
-		[I.tungstensteel_gear]				= _XXXX,
+		[I.tungstensteel_gear]				= _X, -- No use
 		[I.stainless_steel_gear]			= _XXXX,
 
 		[I.copper_blade]					= _X,
@@ -335,7 +335,8 @@ if false then
 	}
 else
 	Goals = Ctlg:new {
-		[I.bronze_dust] = 64
+		[I.bronze_dust] = 64,
+		[I.aluminum_dust] = _XXXXXXXX,
 	}
 end
 return Goals
