@@ -40,12 +40,14 @@ Dict.Item = {
 		brick												= va .. "brick",
 		stone												= va .. "stone",
 		coal												= va .. "coal",
+		bone_meal											= va .. "bone_meal",
 		spruce_log											= va .. "spruce_log",
 		charcoal											= va .. "charcoal",
 		glass												= va .. "glass",
 		glass_pane											= va .. "glass_pane",
 		glass_bottle										= va .. "glass_bottle",
 		sugar_cane											= va .. "sugar_cane",
+		sugar												= va .. "sugar",
 		paper												= va .. "paper",
 		hopper												= va .. "hopper",
 		lapis_ore											= va .. "lapis_ore",
@@ -62,6 +64,7 @@ Dict.Item = {
 		netherrack											= va .. "netherrack",
 		blackstone 											= va .. "blackstone",
 		basalt 												= va .. "basalt",
+		bone												= va .. "bone",
 		soul_soil 											= va .. "soul_soil",
 		magma_block 										= va .. "magma_block",
 		soul_sand 											= va .. "soul_sand",
@@ -1222,6 +1225,7 @@ Dict.Machine = {
 	polarizer = I.polarizer,
 	alloy_smelter = I.alloy_smelter,
 	laser_engraver = I.laser_engraver,
+	distillery = I.distillery,
 }
 
 Dict.OutputHatchList = {
@@ -1316,6 +1320,9 @@ Dict.MatType = {
 
 -- Value is reserved for future use.
 Dict.DirectProd = {
+	-- cobblestone Gen.
+	[I.cobblestone]						= true,
+
 	-- Liquid air
 	[F.liquid_air]						= true,
 
@@ -1381,6 +1388,19 @@ Dict.DirectProd = {
 	-- Titanium Drill
 	[I.uranium_ore]						= true,
 	[I.iridium_ore]						= true,
+
+	-- Mob Crusher
+	[F.blood]							= true,
+	[I.ender_pearl]						= true,
+	[I.bone]							= true,
+	[I.withered_bone]					= true,
+
+	-- Photosynthetic Chamber
+	[I.sugar_cane]						= true,
+
+	-- Core Miner
+	[I.core_fragment]					= true,
+	[F.core_slurry]						= true,
 }
 
 Dict.OddMaxCount = {

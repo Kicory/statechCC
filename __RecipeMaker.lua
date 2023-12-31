@@ -51,6 +51,41 @@ function Recipe:setAlwaysProc()
 	return self
 end
 
+-- Mini class RecipeList (multiple recipes)
+local RecipeList = { }
+
+local recipeListMt = {
+	__index = RecipeList
+}
+
+function RecipeList:new(o)
+	assert(o ~= nil)
+	setmetatable(o, recipeListMt)
+	return o
+end
+
+function RecipeList:setPriority(prio)
+	for _, r in ipairs(self) do
+		r:setPriority(prio)
+	end
+	return self
+end
+
+--- Only materials in idList will counted as output, and used when calculating required crafting
+function RecipeList:setEffectiveOutput(...)
+	for _, r in ipairs(self) do
+		r:setEffectiveOutput(...)
+	end
+	return self
+end
+
+function RecipeList:setAlwaysProc()
+	for _, r in ipairs(self) do
+		r:setAlwaysProc()
+	end
+	return self
+end
+
 --- Add to Recipes list
 ---@param specs table Recipe info
 ---@return table Added Recipe (Can be customized)
@@ -566,8 +601,9 @@ function Recipes.makeSingleChemicalReactorRecipe(...)
 	idx = idx + 1
 	r.minimumPower = ps[idx]
 	local singleRecipe = Recipes.add(r)
-
-	return singleRecipe, bigRecipe
+	
+	local ret = RecipeList:new({singleRecipe, bigRecipe})
+	return ret
 end
 
 return {
