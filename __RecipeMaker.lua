@@ -85,7 +85,7 @@ function RecipeList:setAlwaysProc()
 	end
 	return self
 end
-
+-----------------------------------------------------------------
 --- Add to Recipes list
 ---@param specs table Recipe info
 ---@return table Added Recipe (Can be customized)

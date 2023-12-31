@@ -283,17 +283,17 @@ do -- Electronizer
 	local dm = Helper.dispNameMaker
 	m(I.bauxite_dust, 10, nil, nil, I.aluminum_dust, 4, I.titanium_tiny_dust, 3, nil, nil, dm(I.aluminum_dust) .. from .. dm(I.bauxite_dust), 32):setEffectiveOutput(I.aluminum_dust):setPriority(Recipe.PRIO_LOW) -- Main method for aluminum dust
 	m(I.emerald_dust, 23, nil, nil, I.beryllium_dust, 3, I.aluminum_dust, 2, I.silicon_dust, 6, nil, F.oxygen, 3000, nil, dm(I.emerald_dust) .. eleced, 32):setEffectiveOutput(I.beryllium_dust, I.aluminum_dust, I.silicon_dust):setPriority(Recipe.PRIO_HIGH)
-	m(nil, F.chromium_hydrochloric_solution, 1000, nil, I.chromium_tiny_dust, 3, nil, F.hydrogen, 450, F.chlorine, 450, nil, dm(I.chromium_tiny_dust) .. ele, 16)
-	m(nil, F.heavy_water, 3000, nil, nil, F.deuterium, 2000, F.oxygen, 1000, nil, dm(F.heavy_water) .. eleced, 8)
+	m(nil, F.chromium_hydrochloric_solution, 1000, nil, I.chromium_tiny_dust, 3, nil, F.hydrogen, 450, F.chlorine, 450, nil, dm(I.chromium_tiny_dust) .. ele, 16):setEffectiveOutput(I.chromium_tiny_dust)
+	m(nil, F.heavy_water, 3000, nil, nil, F.deuterium, 2000, F.oxygen, 1000, nil, dm(F.heavy_water) .. eleced, 8):setEffectiveOutput(F.deuterium)
 	m(I.lapis_dust, 18, nil, nil, I.aluminum_dust, 3, I.sodium_dust, 2, I.silicon_dust, 1, nil, nil, dm(I.lapis_dust) .. eleced, 32)
-	m(nil, F.manganese_sulfuric_solution, 1000, nil, I.manganese_tiny_dust, 3, nil, F.sulfuric_acid, 900, nil, dm(I.manganese_tiny_dust) .. ele, 16)
-	m(nil, F.purified_platinum_sulfuric_solution, 1000, nil, I.platinum_tiny_dust, 3, nil, F.sulfuric_acid, 900, nil, dm(I.platinum_tiny_dust) .. ele, 32)
+	m(nil, F.manganese_sulfuric_solution, 1000, nil, I.manganese_tiny_dust, 3, nil, F.sulfuric_acid, 900, nil, dm(I.manganese_tiny_dust) .. ele, 16):setEffectiveOutput(I.manganese_tiny_dust)
+	m(nil, F.purified_platinum_sulfuric_solution, 1000, nil, I.platinum_tiny_dust, 3, nil, F.sulfuric_acid, 900, nil, dm(I.platinum_tiny_dust) .. ele, 32):setEffectiveOutput(I.platinum_tiny_dust)
 	m(nil, F.water, 3000, nil, nil, F.hydrogen, 2000, F.oxygen, 1000, nil, dm(F.water) .. eleced, 8):setPriority(Recipe.PRIO_HIGH)
 	m(nil, F.brine, 8000, nil, nil, F.chlorine, 2000, F.hydrogen, 2000, F.sodium_hydroxide, 3000, F.lithium, 1000, nil, dm(F.brine) .. eleced, 32):setPriority(Recipe.PRIO_HIGH) -- Brine is easy to get
 	-- m(nil, F.chloroform, 1000, nil, nil, F.hydrogen, 300, F.chlorine, 600, nil, dm(F.chloroform) .. eleced, 16):setPriority(Recipe.PRIO_RELUCTANT) -- chloroform is scarce resource..
 	m(I.clay_dust, 32, nil, nil, I.aluminum_dust, 1, I.sodium_dust, 2, I.silicon_dust, 1, nil, F.lithium, 1000, nil, dm(I.clay_dust) .. eleced, 32):setPriority(Recipe.PRIO_LOW) -- Too much energy, low retrieve
 	-- m(nil, F.hydrochloric_acid, 1000, nil, nil, F.hydrogen, 500, F.chlorine, 500, nil, dm(F.hydrochloric_acid) .. eleced, 16):setPriority(Recipe.PRIO_RELUCTANT) -- hydrochloric_acid is scarce resource..
-	m(I.peridot_dust, 9, nil, nil, I.magnesium_dust, 2, I.raw_iron, 2, I.silicon_dust, 1, nil, F.oxygen, 100, nil, dm(I.peridot_dust) .. eleced, 16):setPriority(Recipe.PRIO_HIGH) -- Peridot dust's only usage
+	m(I.peridot_dust, 9, nil, nil, I.magnesium_dust, 2, I.raw_iron, 2, I.silicon_dust, 1, nil, F.oxygen, 100, nil, dm(I.peridot_dust) .. eleced, 16):setEffectiveOutput(I.magnesium_dust, I.raw_iron, I.silicon_dust):setPriority(Recipe.PRIO_HIGH) -- Peridot dust's only usage
 	m(I.salt_dust, 2, nil, F.water, 100, nil, I.sodium_dust, 1, nil, F.chlorine, 125, nil, dm(I.sodium_dust) .. from .. dm(I.salt_dust), 16)
 	m(I.sapphire_dust, 8, nil, nil, I.aluminum_dust, 2, nil, nil, dm(I.sapphire_dust) .. eleced, 16):setPriority(Recipe.PRIO_HIGH) -- sapphire Dust's only usage
 	m(I.sodalite_dust, 23, nil, nil, I.aluminum_dust, 3, I.sodium_dust, 4, I.silicon_dust, 3, nil, nil, dm(I.sodalite_dust) .. eleced, 16):setPriority(Recipe.PRIO_HIGH) -- sodalite_dust's only usage
@@ -350,7 +350,7 @@ do -- Chemical Reactor, large chemical reactor
 	m(nil, F.ethanol, 500, F.acrylic_acid, 25, nil, nil, F.diethyl_ether, 250, F.water, 250, nil, dm(F.diethyl_ether) .. chem, 20):setEffectiveOutput(F.diethyl_ether)
 	m(I.sulfur_dust, 1, nil, F.ethanol, 1000, nil, nil, F.ethylene, 500, F.sulfuric_acid, 400, nil, dm(F.ethylene) .. chem, 10):setEffectiveOutput(F.ethylene)
 	m(I.iron_dust, 1, nil, F.ethylbenzene, 1000, F.steam, 2000, nil, nil, F.styrene, 1000, F.hydrogen, 500, nil, dm(F.styrene), 20):setEffectiveOutput(F.styrene)
-	m(nil, F.ethylene, 200, F.water, 200, F.sulfuric_acid, 35, nil, nil, F.ethanol, 200, nil, dm(F.ethanol) .. " from " .. dm(F.ethylene), 10):setPriority(Recipe.PRIO_RELUCTANT)
+	-- m(nil, F.ethylene, 200, F.water, 200, F.sulfuric_acid, 35, nil, nil, F.ethanol, 200, nil, dm(F.ethanol) .. " from " .. dm(F.ethylene), 10)
 	-- ethanol should be produced from sugar solution... / Ethylene is scarse
 	m(nil, F.plant_oil, 6000, F.ethanol, 400, F.sodium_hydroxide, 100, nil, nil, F.raw_biodiesel, 1500, nil, dm(F.raw_biodiesel), 12)
 	m(nil, F.propene, 400, F.oxygen, 600, nil, nil, F.acrylic_acid, 400, F.water, 400, nil, dm(F.acrylic_acid), 10):setEffectiveOutput(F.acrylic_acid)
@@ -528,7 +528,9 @@ do -- Quasi Quantum Singularity Forge recipe
 end
 -------------------------------------------------
 local function recipeSort(a, b)
-	if a.priority > b.priority then
+	if a.alwaysProc then
+		return true
+	elseif a.priority > b.priority then
 		return true
 	elseif a.priority < b.priority then
 		return false
@@ -542,4 +544,87 @@ end
 
 table.sort(Recipes, recipeSort)
 
+do -- Recipe Validation (no cycles)
+	local ctlgs = {
+		inputs = {},
+		outputs = {}
+	}
+	local recipeCnt = #Recipes
+	local safeSubtreeSet = {}
+	
+	for idx, r in ipairs(Recipes) do
+		table.insert(ctlgs.inputs, Helper.IO2Catalogue(r.unitInput))
+		table.insert(ctlgs.outputs, r.effUnitOutputCtlg)
+	end
+
+	local function listConcat(l, toConcat)
+		for _, v in ipairs(toConcat) do
+			table.insert(l, v)
+		end
+	end
+
+	local function getRecipesHaveInput(fromMat)
+		local ret = {}
+		for idx = 1, recipeCnt do
+			if ctlgs.inputs[idx][fromMat] ~= nil then
+				table.insert(ret, idx)
+			end
+		end
+		return ret
+	end
+
+	local function getConnectedRecipes(recipeIdx)
+		local ret = {}
+		for m, amt in pairs(ctlgs.outputs[recipeIdx]) do
+			local singleRet = getRecipesHaveInput(m)
+			listConcat(ret, singleRet)
+		end
+		return ret
+	end
+
+	local function getErrorMessage(toCheckIdx, stackTrace)
+		local ret = "Cycle detected: \n"
+		for _, ridx in ipairs(stackTrace) do
+			if ridx == toCheckIdx then
+				ret = ret .. "\t\t" .. Recipes[ridx].dispName .. " <\n"
+			else
+				ret = ret .. "\t" .. Recipes[ridx].dispName .. "\n"
+			end
+		end
+		ret = ret .. "\t\t" .. Recipes[toCheckIdx].dispName .. " <"
+		return ret
+	end
+
+	local function recipeCycleChecker(toCheckIdx, stackTrace, depth)
+		stackTrace = stackTrace or {}
+		depth = depth or 1
+		for ii = 1, #stackTrace do
+			if toCheckIdx == stackTrace[ii] then
+				-- Cycle detected
+				error(getErrorMessage(toCheckIdx, stackTrace))
+			end
+		end
+		
+		if safeSubtreeSet[toCheckIdx] then
+			return
+		end
+		local conns = getConnectedRecipes(toCheckIdx)
+		for _, cridx in ipairs(conns) do
+			local nextStack = {}
+			for _, v in ipairs(stackTrace) do
+				table.insert(nextStack, v)
+			end
+			table.insert(nextStack, toCheckIdx)
+			recipeCycleChecker(cridx, nextStack, depth + 1)
+		end
+		safeSubtreeSet[toCheckIdx] = true
+	end
+
+	for ridx = 1, recipeCnt do
+		recipeCycleChecker(ridx)
+	end
+	print("Cycle test Done!")
+end
+
+error("OK!")
 return Recipes
