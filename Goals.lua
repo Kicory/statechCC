@@ -335,7 +335,7 @@ if false then
 	}
 else
 	Goals = Ctlg:new {
-		[I.aluminum_rotor]= 1
+		[I.nuke] = 1
 	}
 end
 return Goals
