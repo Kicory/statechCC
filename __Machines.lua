@@ -19,7 +19,7 @@ local M = {}
 local machineList = nil
 local machineNames = nil
 local factoryStatus = nil
-local paraCostLimit = 257
+local paraCostLimit = 256
 local maxTryWhenEmpty = 2
 --------------------------------------------
 local function refreshMachines()

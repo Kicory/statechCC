@@ -207,13 +207,13 @@ do -- Macerator
 	local from = " from "
 	local grinded = " grinded"
 	local dm = Helper.dispNameMaker
-	m(I.galena_ore, 1, nil, I.galena_dust, 2, nil, dm(I.galena_dust), 2)
-	m(I.peridot_ore, 1, nil, I.peridot_dust, 2, nil, dm(I.peridot_dust), 2)
+	m(I.galena_ore, 1, nil, I.galena_dust, 2, nil, dm(I.galena_dust), 2):setAlwaysProc()
+	m(I.peridot_ore, 1, nil, I.peridot_dust, 2, nil, dm(I.peridot_dust), 2):setAlwaysProc()
 	m(I.ruby_ore, 1, nil, I.ruby_dust, 2, nil, dm(I.ruby_dust) .. mac, 2)
-	m(I.sapphire_ore, 1, nil, I.sapphire_dust, 2, nil, dm(I.sapphire_dust) .. mac, 2)
+	m(I.sapphire_ore, 1, nil, I.sapphire_dust, 2, nil, dm(I.sapphire_dust) .. mac, 2):setAlwaysProc()
 	m(I.silver_ore, 1, nil, I.raw_silver, 2, nil, dm(I.silver_ore) .. grinded, 2)
 	m(I.raw_silver, 1, nil, I.silver_dust, 1, nil, dm(I.raw_silver) .. grinded, 2)
-	m(I.sodalite_ore, 1, nil, I.sodalite_dust, 2, nil, dm(I.sodalite_dust) .. mac, 2)
+	m(I.sodalite_ore, 1, nil, I.sodalite_dust, 2, nil, dm(I.sodalite_dust) .. mac, 2):setAlwaysProc()
 	m(I.ender_pearl, 1, nil, I.ender_pearl_dust, 1, nil, dm(I.ender_pearl_dust) .. mac, 2)
 	m(I.annealed_copper_ingot, 1, nil, I.annealed_copper_dust, 1, nil, dm(I.annealed_copper_dust) .. mac, 2)
 	m(I.antimony_ore, 1, nil, I.raw_antimony, 3, nil, dm(I.raw_antimony) .. mac, 2)
@@ -221,16 +221,16 @@ do -- Macerator
 	m(I.bauxite_ore, 1, nil, I.bauxite_crushed_dust, 3, nil, dm(I.bauxite_ore) .. grinded, 2)
 	m(I.bauxite_crushed_dust, 1, nil, I.bauxite_dust, 1, nil, dm(I.bauxite_crushed_dust) .. grinded, 2)
 	m(I.clay_ball, 1, nil, I.clay_dust, 1, nil, dm(I.clay_ball) .. grinded, 2)
-	m(I.coal_ore, 1, nil, I.coal_crushed_dust, 3, nil, dm(I.coal_ore) .. grinded, 2)
+	m(I.coal_ore, 1, nil, I.coal_crushed_dust, 3, nil, dm(I.coal_ore) .. grinded, 2):setAlwaysProc()
 	m(I.coal, 1, nil, I.coal_dust, 1, nil, dm(I.coal) .. grinded, 2):setAlwaysProc()
 	-- Normal coal is useless. Dust is always more useful.
-	-- Normal coal is from Mob crusher
-	m(I.coal_crushed_dust, 1, nil, I.coal_dust, 1, nil, dm(I.coal_crushed_dust) .. grinded, 2):setPriority(Recipe.PRIO_LOW)
+	m(I.coal_crushed_dust, 1, nil, I.coal_dust, 1, nil, dm(I.coal_crushed_dust) .. grinded, 2):setAlwaysProc()
+	m(I.copper_ore, 1, nil, I.raw_copper, 8, nil, dm(I.copper_ore) .. grinded, 2)
 	m(I.raw_copper, 1, nil, I.copper_dust, 1, nil, dm(I.raw_copper) .. grinded, 2)
 	m(I.diamond_crushed_dust, 1, nil, I.diamond_dust, 1, nil, dm(I.diamond_crushed_dust) .. grinded, 2)
 	m(I.diamond_ore, 1, nil, I.diamond_crushed_dust, 3, nil, dm(I.diamond_ore) .. grinded, 2)
-	m(I.emerald_crushed_dust, 1, nil, I.emerald_dust, 1, nil, dm(I.emerald_crushed_dust) .. grinded, 2)
-	m(I.emerald_ore, 1, nil, I.emerald_crushed_dust, 3, nil, dm(I.emerald_crushed_dust) .. grinded, 2)
+	m(I.emerald_crushed_dust, 1, nil, I.emerald_dust, 1, nil, dm(I.emerald_crushed_dust) .. grinded, 2):setAlwaysProc()
+	m(I.emerald_ore, 1, nil, I.emerald_crushed_dust, 3, nil, dm(I.emerald_crushed_dust) .. grinded, 2):setAlwaysProc()
 	m(I.fluorite_ore, 1, nil, I.raw_fluorite, 3, nil, dm(I.fluorite_ore) .. grinded, 2)
 	m(I.raw_fluorite, 1, nil, I.fluorite_dust, 1, nil, dm(I.raw_fluorite) .. grinded, 2)
 	m(I.nether_gold_ore, 1, nil, I.raw_gold, 3, nil, dm(I.nether_gold_ore) .. grinded, 2):setPriority(Recipe.PRIO_HIGH) -- nether ones would be less. Less ones first.
@@ -240,10 +240,11 @@ do -- Macerator
 	m(I.raw_iridium, 1, nil, I.iridium_dust, 1, nil, dm(I.raw_iridium) .. grinded, 2)
 	m(I.iron_ore, 1, nil, I.raw_iron, 3, nil, dm(I.iron_ore) .. grinded, 2)
 	m(I.raw_iron, 1, nil, I.iron_dust, 1, nil, dm(I.raw_iron) .. grinded, 2):setPriority(Recipe.PRIO_HIGH)
-	m(I.lapis_crushed_dust, 1, nil, I.lapis_dust, 1, nil, dm(I.lapis_crushed_dust) .. grinded, 2)
-	m(I.lapis_ore, 1, nil, I.lapis_crushed_dust, 16, nil, dm(I.lapis_ore) .. grinded, 2)
-	m(I.lead_ore, 1, nil, I.raw_lead, 3, nil, dm(I.lead_ore) .. grinded, 2)
-	m(I.raw_lead, 1, nil, I.lead_dust, 1, nil, dm(I.raw_lead) .. grinded, 2)
+	m(I.lapis_crushed_dust, 1, nil, I.lapis_dust, 1, nil, dm(I.lapis_crushed_dust) .. grinded, 2):setAlwaysProc()
+	m(I.lapis_ore, 1, nil, I.lapis_crushed_dust, 16, nil, dm(I.lapis_ore) .. grinded, 2):setAlwaysProc()
+	m(I.lead_ore, 1, nil, I.raw_lead, 3, nil, dm(I.lead_ore) .. grinded, 2):setAlwaysProc()
+	m(I.raw_lead, 1, nil, I.lead_dust, 1, nil, dm(I.raw_lead) .. grinded, 2):setAlwaysProc()
+	m(I.lead_ingot, 1, nil, I.lead_dust, 1, nil, dm(I.lead_ingot) .. grinded, 2):setAlwaysProc()
 	m(I.lignite_coal_ore, 1, nil, I.lignite_coal_crushed_dust, 3, nil, dm(I.lignite_coal_ore) .. grinded, 2):setAlwaysProc()
 	m(I.lignite_coal_crushed_dust, 1, nil, I.lignite_coal_dust, 1, nil, dm(I.lignite_coal_crushed_dust) .. grinded, 2):setAlwaysProc()
 	m(I.nether_quartz_ore, 1, nil, I.quartz_crushed_dust, 4, nil, dm(I.nether_quartz_ore) .. grinded, 2):setPriority(Recipe.PRIO_HIGH) -- nether ones would be less. Less ones first.
@@ -256,7 +257,7 @@ do -- Macerator
 	m(I.mozanite_ore, 1, nil, I.mozanite_crushed_dust, 3, nil, dm(I.mozanite_ore) .. grinded, 2)
 	m(I.nickel_ore, 1, nil, I.raw_nickel, 3, nil, dm(I.nickel_ore) .. grinded, 2)
 	m(I.raw_nickel, 1, nil, I.nickel_dust, 1, nil, dm(I.raw_nickel) .. grinded, 2)
-	m(I.platinum_ore, 1, nil, I.raw_platinum, 3, nil, dm(I.platinum_ore) .. grinded, 2)
+	m(I.platinum_ore, 1, nil, I.raw_platinum, 3, nil, dm(I.platinum_ore) .. grinded, 2):setAlwaysProc()
 	m(I.bone, 1, nil, I.bone_meal, 6, nil, dm(I.bone) .. grinded, 2)
 	m(I.salt_ore, 1, nil, I.salt_crushed_dust, 3, nil, dm(I.salt_ore) .. grinded, 2)
 	m(I.salt_crushed_dust, 1, nil, I.salt_dust, 1, nil, dm(I.salt_crushed_dust) .. grinded, 2)
@@ -268,7 +269,7 @@ do -- Macerator
 	m(I.raw_tungsten, 1, nil, I.tungsten_dust, 1, nil, dm(I.raw_tungsten) .. grinded, 2)
 	m(I.uranium_ore, 1, nil, I.raw_uranium, 3, nil, dm(I.uranium_ore) .. grinded, 2)
 	m(I.raw_uranium, 1, nil, I.uranium_dust, 1, nil, dm(I.raw_uranium) .. grinded, 2)
-	m(I.sheldonite_ore, 1, nil, I.raw_platinum, 3, nil, dm(I.sheldonite_ore) .. grinded, 2):setPriority(Recipe.PRIO_HIGH) -- Higher for scarce material
+	m(I.sheldonite_ore, 1, nil, I.raw_platinum, 3, nil, dm(I.sheldonite_ore) .. grinded, 2):setAlwaysProc()
 	m(I.clay, 1, nil, I.clay_ball, 4, nil, dm(I.clay) .. grinded, 2)
 	m(I.cobblestone, 1, nil, I.gravel, 1, nil, dm(I.cobblestone) .. grinded, 2)
 	m(I.gravel, 1, nil, I.sand, 1, nil, dm(I.sand) .. from .. dm(I.gravel) .. mac, 2)
@@ -282,21 +283,21 @@ do -- Electronizer
 	local eleced = " electrolized"
 	local dm = Helper.dispNameMaker
 	m(I.bauxite_dust, 10, nil, nil, I.aluminum_dust, 4, I.titanium_tiny_dust, 3, nil, nil, dm(I.aluminum_dust) .. from .. dm(I.bauxite_dust), 32):setEffectiveOutput(I.aluminum_dust):setPriority(Recipe.PRIO_LOW) -- Main method for aluminum dust
-	m(I.emerald_dust, 23, nil, nil, I.beryllium_dust, 3, I.aluminum_dust, 2, I.silicon_dust, 6, nil, F.oxygen, 3000, nil, dm(I.emerald_dust) .. eleced, 32):setEffectiveOutput(I.beryllium_dust, I.aluminum_dust, I.silicon_dust):setPriority(Recipe.PRIO_HIGH)
+	m(I.emerald_dust, 23, nil, nil, I.beryllium_dust, 3, I.aluminum_dust, 2, I.silicon_dust, 6, nil, F.oxygen, 3000, nil, dm(I.emerald_dust) .. eleced, 32):setAlwaysProc()
 	m(nil, F.chromium_hydrochloric_solution, 1000, nil, I.chromium_tiny_dust, 3, nil, F.hydrogen, 450, F.chlorine, 450, nil, dm(I.chromium_tiny_dust) .. ele, 16):setEffectiveOutput(I.chromium_tiny_dust)
 	m(nil, F.heavy_water, 3000, nil, nil, F.deuterium, 2000, F.oxygen, 1000, nil, dm(F.heavy_water) .. eleced, 8):setEffectiveOutput(F.deuterium)
-	m(I.lapis_dust, 18, nil, nil, I.aluminum_dust, 3, I.sodium_dust, 2, I.silicon_dust, 1, nil, nil, dm(I.lapis_dust) .. eleced, 32)
+	m(I.lapis_dust, 18, nil, nil, I.aluminum_dust, 3, I.sodium_dust, 2, I.silicon_dust, 1, nil, nil, dm(I.lapis_dust) .. eleced, 32):setAlwaysProc()
 	m(nil, F.manganese_sulfuric_solution, 1000, nil, I.manganese_tiny_dust, 3, nil, F.sulfuric_acid, 900, nil, dm(I.manganese_tiny_dust) .. ele, 16):setEffectiveOutput(I.manganese_tiny_dust)
 	m(nil, F.purified_platinum_sulfuric_solution, 1000, nil, I.platinum_tiny_dust, 3, nil, F.sulfuric_acid, 900, nil, dm(I.platinum_tiny_dust) .. ele, 32):setEffectiveOutput(I.platinum_tiny_dust)
 	m(nil, F.water, 3000, nil, nil, F.hydrogen, 2000, F.oxygen, 1000, nil, dm(F.water) .. eleced, 8):setPriority(Recipe.PRIO_HIGH)
 	m(nil, F.brine, 8000, nil, nil, F.chlorine, 2000, F.hydrogen, 2000, F.sodium_hydroxide, 3000, F.lithium, 1000, nil, dm(F.brine) .. eleced, 32):setPriority(Recipe.PRIO_HIGH) -- Brine is easy to get
 	-- m(nil, F.chloroform, 1000, nil, nil, F.hydrogen, 300, F.chlorine, 600, nil, dm(F.chloroform) .. eleced, 16):setPriority(Recipe.PRIO_RELUCTANT) -- chloroform is scarce resource..
-	m(I.clay_dust, 32, nil, nil, I.aluminum_dust, 1, I.sodium_dust, 2, I.silicon_dust, 1, nil, F.lithium, 1000, nil, dm(I.clay_dust) .. eleced, 32):setPriority(Recipe.PRIO_LOW) -- Too much energy, low retrieve
+	m(I.clay_dust, 32, nil, nil, I.aluminum_dust, 1, I.sodium_dust, 2, I.silicon_dust, 1, nil, F.lithium, 1000, nil, dm(I.clay_dust) .. eleced, 32):setOpportunistic() -- Too much energy, low retrieve
 	-- m(nil, F.hydrochloric_acid, 1000, nil, nil, F.hydrogen, 500, F.chlorine, 500, nil, dm(F.hydrochloric_acid) .. eleced, 16):setPriority(Recipe.PRIO_RELUCTANT) -- hydrochloric_acid is scarce resource..
-	m(I.peridot_dust, 9, nil, nil, I.magnesium_dust, 2, I.raw_iron, 2, I.silicon_dust, 1, nil, F.oxygen, 100, nil, dm(I.peridot_dust) .. eleced, 16):setEffectiveOutput(I.magnesium_dust, I.raw_iron, I.silicon_dust):setPriority(Recipe.PRIO_HIGH) -- Peridot dust's only usage
-	m(I.salt_dust, 2, nil, F.water, 100, nil, I.sodium_dust, 1, nil, F.chlorine, 125, nil, dm(I.sodium_dust) .. from .. dm(I.salt_dust), 16)
-	m(I.sapphire_dust, 8, nil, nil, I.aluminum_dust, 2, nil, nil, dm(I.sapphire_dust) .. eleced, 16):setPriority(Recipe.PRIO_HIGH) -- sapphire Dust's only usage
-	m(I.sodalite_dust, 23, nil, nil, I.aluminum_dust, 3, I.sodium_dust, 4, I.silicon_dust, 3, nil, nil, dm(I.sodalite_dust) .. eleced, 16):setPriority(Recipe.PRIO_HIGH) -- sodalite_dust's only usage
+	m(I.peridot_dust, 9, nil, nil, I.magnesium_dust, 2, I.raw_iron, 2, I.silicon_dust, 1, nil, F.oxygen, 100, nil, dm(I.peridot_dust) .. eleced, 16):setEffectiveOutput(I.magnesium_dust, I.raw_iron, I.silicon_dust):setAlwaysProc() -- Peridot dust's only usage
+	m(I.salt_dust, 2, nil, F.water, 100, nil, I.sodium_dust, 1, nil, F.chlorine, 125, nil, dm(I.sodium_dust) .. from .. dm(I.salt_dust), 16):setEffectiveOutput(I.sodium_dust)
+	m(I.sapphire_dust, 8, nil, nil, I.aluminum_dust, 2, nil, nil, dm(I.sapphire_dust) .. eleced, 16):setAlwaysProc() -- sapphire Dust's only usage
+	m(I.sodalite_dust, 23, nil, nil, I.aluminum_dust, 3, I.sodium_dust, 4, I.silicon_dust, 3, nil, nil, dm(I.sodalite_dust) .. eleced, 16):setAlwaysProc() -- sodalite_dust's only usage
 end
 -------------------------------------------------
 do -- Polarizer
@@ -343,7 +344,8 @@ do -- Chemical Reactor, large chemical reactor
 	m(nil, F.tetrafluoroethylene, 300, F.oxygen, 1000, nil, nil, F.polytetrafluoroethylene, 400, nil, dm(F.polytetrafluoroethylene), 20)
 	m(I.diamond, 1, nil, F.molten_redstone, 3600, nil, I.synthetic_redstone_crystal, 1, nil, nil, dm(I.synthetic_redstone_crystal), 24)
 	m(nil, F.hydrofluoric_acid, 2000, F.chloroform, 1000, nil, nil, F.hydrochloric_acid, 2500, F.tetrafluoroethylene, 500, nil, dm(F.tetrafluoroethylene), 24):setEffectiveOutput(F.tetrafluoroethylene)
-	m(I.coal_dust, 1, nil, F.acetylene, 1000, nil, nil, F.hydrogen, 2000, nil, dm(F.hydrogen) .. " from " .. dm(I.coal_dust), 12)
+	-- m(I.coal_dust, 1, nil, F.acetylene, 1000, nil, nil, F.hydrogen, 2000, nil, dm(F.hydrogen) .. " from " .. dm(I.coal_dust), 12)
+	-- Hydrogen is cheap.
 	m(nil, F.benzene, 750, F.ethylene, 750, F.hydrochloric_acid, 100, nil, nil, F.ethylbenzene, 750, nil, dm(F.ethylbenzene) .. chem, 12):setPriority(Recipe.PRIO_LOW)
 	-- Primariliy Ethylbenzene should be from distillation...
 	m(I.aluminum_tiny_dust, 1, nil, F.ethanol, 750, nil, nil, F.butadiene, 375, F.water, 750, F.hydrogen, 250, nil, dm(F.butadiene) .. chem, 16):setEffectiveOutput(F.butadiene)
@@ -435,18 +437,24 @@ do -- Blast Furnace recipes (Cupronickel, Kanthal, Tungstensteel)
 	mk(I.le_uranium_dust, 1, nil, nil, I.le_uranium_ingot, 1, nil, nil, dm(I.le_uranium_ingot), 128)
 	mk(I.platinum_dust, 1, nil, nil, I.platinum_hot_ingot, 1, nil, nil, dm(I.platinum_hot_ingot), 128)
 	mk(I.plutonium_dust, 1, nil, nil, I.plutonium_ingot, 1, nil, nil, dm(I.plutonium_ingot), 128)
-	mk(I.titanium_dust, 1, nil, nil, I.titanium_hot_ingot, 1, nil, nil, dm(I.titanium_hot_ingot), 128)
 	mk(I.uranium_dust, 1, nil, nil, I.uranium_ingot, 1, nil, nil, dm(I.uranium_ingot) .. bla, 128)
 	mk(I.stainless_steel_dust, 1, nil, F.molten_enderium, 1000, nil, I.enderium_hot_ingot, 1, nil, nil, dm(I.enderium_hot_ingot), 64)
 	mk(I.tungsten_ingot, 1, I.steel_ingot, 1, nil, nil, I.tungstensteel_hot_ingot, 1, nil, nil, dm(I.tungstensteel_hot_ingot), 128)
 	mk(I.steel_dust, 1, nil, F.liquid_ender, 1000, nil, nil, F.molten_enderium, 1000, nil, dm(F.molten_enderium), 48)
-	mk(I.nether_star, 1, nil, nil, nil, F.molten_nether_star, 500, nil, dm(F.molten_nether_star), 128)
 	mk(I.platinum_tiny_dust, 1, nil, F.impure_liquid_nether_star, 1000, nil, nil, F.molten_nether_star, 1000, nil, dm(F.molten_nether_star) .. " from impure", 128)
 	
 	mt(I.superconductor_dust, 1, nil, F.molten_nether_star, 50, nil, I.superconductor_hot_ingot, 1, nil, nil, dm(I.superconductor_hot_ingot), 512)
-
+	
 	---------------------------- Special -------
-	mc(I.refined_iron_ingot, 3, I.carbon_dust, 1, nil, nil, I.steel_ingot, 4, nil, nil, dm(I.steel_ingot) .. " from " .. dm(I.refined_iron_ingot), 16)
+	mkRaw(I.nether_star, 1, nil, nil, nil, F.molten_nether_star, 500, nil, dm(F.molten_nether_star), 128):setOpportunistic()
+	mtRaw(I.nether_star, 1, nil, nil, nil, F.molten_nether_star, 500, nil, dm(F.molten_nether_star), 128):setOpportunistic()
+
+	mkRaw(I.titanium_dust, 1, nil, nil, I.titanium_hot_ingot, 1, nil, nil, dm(I.titanium_hot_ingot), 128):setOpportunistic()
+	mtRaw(I.titanium_dust, 1, nil, nil, I.titanium_hot_ingot, 1, nil, nil, dm(I.titanium_hot_ingot), 128):setOpportunistic()
+
+	mcRaw(I.refined_iron_ingot, 3, I.carbon_dust, 1, nil, nil, I.steel_ingot, 4, nil, nil, dm(I.steel_ingot) .. " from " .. dm(I.refined_iron_ingot), 16):setOpportunistic()
+	mkRaw(I.refined_iron_ingot, 3, I.carbon_dust, 1, nil, nil, I.steel_ingot, 4, nil, nil, dm(I.steel_ingot) .. " from " .. dm(I.refined_iron_ingot), 16):setOpportunistic()
+	mtRaw(I.refined_iron_ingot, 3, I.carbon_dust, 1, nil, nil, I.steel_ingot, 4, nil, nil, dm(I.steel_ingot) .. " from " .. dm(I.refined_iron_ingot), 16):setOpportunistic()
 	mc(I.carbon_dust, 1, I.iron_dust, 4, nil, nil, I.steel_ingot, 5, nil, nil, dm(I.steel_ingot) .. bla, 16)
 	-- Use refined iron prior than normal iron dust
 	mc(I.uncooked_steel_dust, 1, nil, nil, I.steel_ingot, 1, nil, nil, dm(I.steel_ingot) .. " from " .. dm(I.uncooked_steel_dust), 2)
@@ -458,6 +466,7 @@ end
 do -- Pyrolyse Oven recipes
 	local m = Recipes.makeSingleRecipeMaker(MultiblockMachine.pyrolyseOven, true, true, true, true)
 	m(I.spruce_log, 16, nil, F.steam, 8000, nil, I.charcoal, 24, nil, F.wood_tar, 1000, nil, Helper.dispNameMaker(F.wood_tar), 16):setEffectiveOutput(F.wood_tar)
+	m(I.coal_dust, 16, nil, F.steam, 8000, nil, I.coke_dust, 20, nil, F.creosote, 1000, nil, Helper.dispNameMaker(I.coke_dust) .. ", Pyrolyse", 16)
 end
 -------------------------------------------------
 do -- Vacuum Freezer recipes
@@ -480,7 +489,7 @@ do -- Vacuum Freezer recipes
 
 	m(nil, F.argon, 35, F.helium, 15, nil, nil, F.cryofluid, 50, nil, dm(F.cryofluid), 64)
 	m(nil, F.polytetrafluoroethylene, 100, nil, I.polytetrafluoroethylene_ingot, 1, nil, nil, dm(I.polytetrafluoroethylene_ingot), 32)
-	m(nil, F.styrene_butadiene_rubber, 200, nil, I.rubber_sheet, 64, nil, nil, dm(I.rubber_sheet) .. " from " .. dm(F.styrene_butadiene_rubber), 128):setPriority(Recipe.PRIO_RELUCTANT)
+	m(nil, F.styrene_butadiene_rubber, 200, nil, I.rubber_sheet, 64, nil, nil, dm(I.rubber_sheet) .. " from " .. dm(F.styrene_butadiene_rubber), 128):setPriority(Recipe.PRIO_RELUCTANT):setOpportunistic()
 end
 -------------------------------------------------
 do -- Heat Exchanger recipes
@@ -626,5 +635,4 @@ do -- Recipe Validation (no cycles)
 	print("Cycle test Done!")
 end
 
-error("OK!")
 return Recipes

@@ -51,6 +51,11 @@ function Recipe:setAlwaysProc()
 	return self
 end
 
+function Recipe:setOpportunistic()
+	self.opportunistic = true
+	return self
+end
+
 -- Mini class RecipeList (multiple recipes)
 local RecipeList = { }
 
@@ -85,6 +90,13 @@ function RecipeList:setAlwaysProc()
 	end
 	return self
 end
+
+function RecipeList:setOpportunistic()
+	for _, r in ipairs(self) do
+		r:setOpportunistic()
+	end
+	return self
+end
 -----------------------------------------------------------------
 --- Add to Recipes list
 ---@param specs table Recipe info
@@ -114,6 +126,8 @@ function Recipes.add(specs)
 		effUnitOutputCtlg = Helper.IO2Catalogue(specs.unitOutput),
 		-- Schedule if there is input material.
 		alwaysProc = false,
+		-- Not used for goal maker calculation (only craft when resource is available)
+		opportunistic = false,
 	}
 	Recipes[order] = r
 
@@ -145,7 +159,7 @@ function Recipes.makeCompressorRecipesBasic(...)
 	local ps = table.pack(...)
 	local function addOne(inputID, outputID, outputCnt, dispNamePostfix)
 		if inputID and outputID then
-			Recipes.add {
+			return Recipes.add {
 				dispName = Helper.dispNameMaker(outputID) .. dispNamePostfix,
 				unitInput = {
 					item = {
@@ -169,7 +183,11 @@ function Recipes.makeCompressorRecipesBasic(...)
 		local curvedPlateID = ps[idx + 3]
 		local rodID = ps[idx + 4]
 		local ringID = ps[idx + 5]
-		addOne(doubleIngotID, plateID, 2, " from Double Ingot")
+		
+		local doubleRecipe = addOne(doubleIngotID, plateID, 2, " from Double Ingot")
+		if doubleRecipe then 
+			doubleRecipe:setOpportunistic()
+		end
 		addOne(ingotID, plateID, 1, "")
 		addOne(plateID, curvedPlateID, 1, "")
 		addOne(rodID, ringID, 1, "")
@@ -178,50 +196,36 @@ end
 
 --- Make rod recipes. [single Ingot ID, double ingot ID (if there's no double ingot, give false or nil; anything evaluated to 'false'), rod ID]
 function Recipes.makeCutterRodRecipes(...)
+	local function addOne(fromID, toID, toAmt, dispName)
+		return Recipes.add {
+			dispName = dispName,
+			unitInput = {
+				item = {
+					[fromID] = 1
+				},
+				fluid = {
+					[Fluid.lubricant] = 10
+				}
+			},
+			unitOutput = {
+				item = {
+					[toID] = toAmt
+				}
+			},
+			machineType = Machine.electric_cutting_machine,
+			minimumPower = 2
+		}
+	end
 	local ps = table.pack(...)
 	for idx = 1, #ps, 3 do
 		local fromID = ps[idx]
 		local fromDoubleID = ps[idx + 1]
 		local toID = ps[idx + 2]
 		if fromDoubleID then
-			Recipes.add {
-				dispName = Helper.dispNameMaker(toID) .. " from Double",
-				unitInput = {
-					item = {
-						[fromDoubleID] = 1
-					},
-					fluid = {
-						[Fluid.lubricant] = 10
-					}
-				},
-				unitOutput = {
-					item = {
-						[toID] = 4
-					}
-				},
-				machineType = Machine.electric_cutting_machine,
-				minimumPower = 2
-			}
+			addOne(fromDoubleID, toID, 4, Helper.dispNameMaker(toID) .. " from Double"):setOpportunistic()
 		end
 		if fromID then
-			Recipes.add {
-				dispName = Helper.dispNameMaker(toID),
-				unitInput = {
-					item = {
-						[fromID] = 1
-					},
-					fluid = {
-						[Fluid.lubricant] = 10
-					}
-				},
-				unitOutput = {
-					item = {
-						[toID] = 2
-					}
-				},
-				machineType = Machine.electric_cutting_machine,
-				minimumPower = 2
-			}
+			addOne(fromID, toID, 2, Helper.dispNameMaker(toID))
 		end
 	end
 end

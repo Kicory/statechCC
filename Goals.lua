@@ -29,7 +29,7 @@ local _XXXXXXXXXXXXXXXX = 512
 local _XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX = 1024
 local _XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX = 2048
 
-if true then
+if false then
 	-- Producers
 	goalMaker {
 		[I.copper_drill]					= _X,
@@ -335,8 +335,7 @@ if true then
 	}
 else
 	Goals = Ctlg:new {
-		[I.bronze_dust] = 64,
-		[I.aluminum_dust] = _XXXXXXXX,
+		[I.aluminum_rotor]= 1
 	}
 end
 return Goals

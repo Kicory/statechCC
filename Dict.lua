@@ -1319,7 +1319,18 @@ Dict.MatType = {
 }
 
 -- Value is reserved for future use.
+-- Some materials are 'supplementary'
+---- 1. Is not a main resource to produce something
+---- 2. Not abundant compared to main resource (If it is, then it's the main method)
+---- 3. Only used for ONE recipe chain
+------ e.g., Galena Dust --> lead ingot --> lead dust
+------ e.g., lapis dust --> aluminum_dust, sodium_dust, silicon_dust
+------ e.g., sodalite --> aluminum_dust, sodium_dust, silicon_dust
+---- Supplementary materials should not set Goals; should just processed. It messes the auto goal maker too much.
 Dict.DirectProd = {
+	-- Boilers
+	[F.steam]							= true,
+
 	-- cobblestone Gen.
 	[I.cobblestone]						= true,
 
@@ -1335,15 +1346,17 @@ Dict.DirectProd = {
 
 	-- Bronze Drill
 	[I.iron_ore]						= true,
-	[I.coal_ore]						= true,
-	[I.lignite_coal_ore]				= true,
+		[I.coal_dust]						= true, -- Derived from coal ore and coal
+	-- [I.coal_ore]						= true,
+	-- [I.lignite_coal_ore]					= true,
 	[I.copper_ore]						= true,
 	[I.tin_ore]							= true,
 	[I.gold_ore]						= true,
-	[I.lead_ore]						= true,
 	[I.redstone_ore]					= true,
 	[I.silver_ore]						= true,
-	[I.galena_ore]						= true,
+		[I.lead_dust]						= true, -- Derived from lead ore and galena ore
+	-- [I.lead_ore]							= true,
+	-- [I.galena_ore]						= true,
 
 	-- Gold Drill
 	[I.netherrack]						= true,
@@ -1367,23 +1380,25 @@ Dict.DirectProd = {
 	[I.antimony_ore]					= true,
 	[I.fluorite_ore]					= true,
 	[I.diamond_ore]						= true,
-	[I.lapis_ore]						= true,
+	-- [I.lapis_ore]						= true,
 	[I.lead_ore]						= true,
 	[I.nickel_ore]						= true,
 	[I.bauxite_ore]						= true,
 	[I.salt_ore]						= true,
-	[I.emerald_ore]						= true,
+	-- [I.emerald_ore]						= true,
 	[I.quartz_ore]						= true,
 	[I.ruby_ore]						= true,
-	[I.sapphire_ore]					= true,
+	-- [I.sapphire_ore]						= true,
 
 	-- Stainless Steel Drill
 	[I.titanium_ore]					= true,
 	[I.tungsten_ore]					= true,
 	[I.mozanite_ore]					= true,
-	[I.platinum_ore]					= true,
-	[I.sheldonite_ore]					= true,
-	[I.peridot_ore]						= true,
+		[I.raw_platinum]					= true, -- Derived from platinum ore and sheldonite ore
+	-- [I.platinum_ore]						= true,
+	-- [I.sheldonite_ore]					= true,
+	-- [I.peridot_ore]						= true,
+	-- [I.sodalite_ore]						= true,
 
 	-- Titanium Drill
 	[I.uranium_ore]						= true,
@@ -1394,6 +1409,7 @@ Dict.DirectProd = {
 	[I.ender_pearl]						= true,
 	[I.bone]							= true,
 	[I.withered_bone]					= true,
+	-- [I.coal]								= true,
 
 	-- Photosynthetic Chamber
 	[I.sugar_cane]						= true,
@@ -1401,6 +1417,9 @@ Dict.DirectProd = {
 	-- Core Miner
 	[I.core_fragment]					= true,
 	[F.core_slurry]						= true,
+
+	-- Industrial Greenhouse
+	[I.spruce_log]						= true,
 }
 
 Dict.OddMaxCount = {

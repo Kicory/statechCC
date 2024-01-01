@@ -63,6 +63,19 @@ local mt = {
 		end
 		return ret
 	end,
+	__eq = function(ctlg, other)
+		for k, v in pairs(ctlg) do
+			if other[k] == nil or other[k] ~= v then
+				return false
+			end
+		end
+		for k, v in pairs(other) do
+			if ctlg[k] == nil or ctlg[k] ~= v then
+				return false
+			end
+		end
+		return true
+	end,
 }
 
 function Ctlg:new(o)
