@@ -44,17 +44,9 @@ local mt = {
 			end
 			return ret
 		elseif type(ctlg) == "table" and type(other) == "table" then
-			local ret = nil
-			for id, amt in pairs(other) do
-				if type(amt) == "number" and amt ~= 0 then
-					local singleResult = math.floor((ctlg[id] or 0) / amt)
-					ret = math.min(ret or singleResult, singleResult)
-				end
-			end
-			ret = ret or 0
-			return ret
+			return ctlg:divWithOffset(other)
 		end
-		error("Only support division with other ctlg or number")
+		error("Only support division with other ctlg or number " .. debug.traceback())
 	end,
 	__unm = function(ctlg)
 		local ret = ctlg:copy()
@@ -97,6 +89,22 @@ function Ctlg:map(func)
 		self[k] = func(k, v)
 	end
 	return self
+end
+
+function Ctlg:divWithOffset(otherCtlg, offset)
+	return self:divGeneric(otherCtlg, offset, math.floor)
+end
+
+function Ctlg:divGeneric(otherCtlg, offset, roundingFunc)
+	local ret = nil
+	offset = offset or Ctlg:new()
+	for id, amt in pairs(otherCtlg) do
+		assert(type(amt) == "number" and amt ~= 0, debug.traceback())
+		local singleResult = roundingFunc(((self[id] or 0) + (offset[id] or 0)) / amt)
+		ret = math.min(ret or singleResult, singleResult)
+	end
+	ret = ret or 0
+	return ret
 end
 
 function Ctlg:filter(pred)

@@ -62,21 +62,22 @@ end
 ---@param limit integer Maximum units to use.
 ---@return integer count of units successfully used
 ---@return table Catalogue of lacking materials
-function St.tryUse(availableCtlg, toUse, limit)
-	assert(limit ~= nil and limit > 0, Helper.serializeTable(toUse))
+function St.tryUse(availableCtlg, stockOffsetCtlg, toUseCtlg, limit)
+	assert(limit ~= nil and limit > 0, Helper.serializeTable(toUseCtlg))
 
-	local toUseCtlg = Helper.IO2Catalogue(toUse)
-
-	local result = availableCtlg / toUseCtlg
+	local result = availableCtlg:divWithOffset(toUseCtlg, stockOffsetCtlg)
 	result = math.min(limit, result)
-	local lacksCtlg = toUseCtlg:inPlaceSub(availableCtlg, Ctlg.IGNORE_NEW_KEY):filter(function(k, v) return v > 0 end)
+	local lacksCtlg = toUseCtlg:copy():inPlaceSub(availableCtlg, Ctlg.IGNORE_NEW_KEY):filter(function(k, v) return v > 0 end)
 
 	if result ~= 0 then
-		local used = Helper.IO2Catalogue(Helper.makeMultipliedIO(toUse, result))
+		local used = toUseCtlg * result
 		availableCtlg:inPlaceSub(used, Ctlg.ERROR_ON_NEW_KEY)
 	end
 
 	return result, lacksCtlg
+end
+
+function St.tryUseGeneric(availableCtlg, stockOffset, toUse, limit)
 end
 -----------------------------------
 function St.getRequirements(wholeRecipes, goalsCtlg)
@@ -87,7 +88,7 @@ function St.getRequirements(wholeRecipes, goalsCtlg)
 		if recipe.alwaysProc then
 			return catalogue / Helper.IO2Catalogue(recipe.unitInput)
 		else
-			return -((-requiredCtlg) / recipe.effUnitOutputCtlg)
+			return requiredCtlg:divGeneric(recipe.effUnitOutputCtlg, nil, math.ceil)
 		end
 	end
 

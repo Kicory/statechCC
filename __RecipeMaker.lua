@@ -18,6 +18,8 @@ local Recipe = {
 	PRIO_NORMAL = 80,
 	PRIO_LOW = 70,
 	PRIO_RELUCTANT = 60,
+	PADDING_GOAL = "GOAL",
+	PADDING_HALF_GOAL = "HALF_GOAL",
 }
 
 local recipeMt = {
@@ -51,9 +53,21 @@ function Recipe:setAlwaysProc()
 	return self
 end
 
-function Recipe:setOpportunistic()
+function Recipe:setOpportunistic(...)
 	self.opportunistic = true
+	local ps = table.pack(...)
+	for _, mat in ipairs(ps) do
+		self.paddingCtlg[mat] = Recipe.PADDING_GOAL
+	end
 	return self
+end
+
+function Recipe:setPaddings(...)
+	local ps = table.pack(...)
+	for idx = 1, #ps, 2 do
+		assert(type(ps[idx]) == "string", debug.traceback())
+		self.paddingCtlg[ps[idx]] = ps[idx + 1]
+	end
 end
 
 -- Mini class RecipeList (multiple recipes)
@@ -91,9 +105,16 @@ function RecipeList:setAlwaysProc()
 	return self
 end
 
-function RecipeList:setOpportunistic()
+function RecipeList:setOpportunistic(...)
 	for _, r in ipairs(self) do
-		r:setOpportunistic()
+		r:setOpportunistic(...)
+	end
+	return self
+end
+
+function RecipeList:setPaddings(...)
+	for _, r in ipairs(self) do
+		r:setPaddings(...)
 	end
 	return self
 end
@@ -128,6 +149,7 @@ function Recipes.add(specs)
 		alwaysProc = false,
 		-- Not used for goal maker calculation (only craft when resource is available)
 		opportunistic = false,
+		paddingCtlg = Ctlg:new(),
 	}
 	Recipes[order] = r
 

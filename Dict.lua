@@ -1253,6 +1253,7 @@ Dict.MultiblockMachine = {
 	blastFurnaceTung = I.electric_blast_furnace .. "_tung",
 	pyrolyseOven = I.pyrolyse_oven,
 	vacuumFreezer = I.vacuum_freezer,
+	distillationTower = I.distillation_tower,
 	heatExchanger = I.heat_exchanger,
 	pressurizer = I.pressurizer,
 	implosionCompressor = I.implosion_compressor,
@@ -1342,7 +1343,8 @@ Dict.DirectProd = {
 
 	-- Oil Drilling Rig
 	[F.lava]							= true,
-	[F.salt_water]						= true,
+	[F.brine]								= true, -- Derived from salt water
+	-- [F.salt_water]						= true,
 	[F.crude_oil]						= true,
 	[F.shale_oil]						= true,
 	[F.water]							= true,
@@ -1388,7 +1390,7 @@ Dict.DirectProd = {
 	[I.nickel_ore]						= true,
 	[I.bauxite_ore]						= true,
 	[I.salt_ore]						= true,
-	-- [I.emerald_ore]						= true,
+	[I.emerald_ore]						= true,
 	[I.quartz_ore]						= true,
 	[I.ruby_ore]						= true,
 	-- [I.sapphire_ore]						= true,

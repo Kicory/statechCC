@@ -180,6 +180,7 @@ local function markMachine(machineName, info, req, states)
 	local resultSchedule = states.resultSchedule
 	local afterFeedCtlg = states.afterFeedCtlg
 	local expectedOutputCtlg = states.expectedOutputCtlg
+	local goalsCtlg = states.goalsCtlg
 
 	local recipe = req.recipe
 	local isEmpty, fitCount, minPowOk, craftingSpeed = getMachineReadiness(machineName, recipe)
@@ -209,8 +210,20 @@ local function markMachine(machineName, info, req, states)
 	local previousRecipe = resultSchedule[machineName]
 	if previousRecipe and recipe.rank > previousRecipe.rank then return end
 
+	-- Calculate stock padding (Materials reserve for other recipes)
+	local stockOffsetCtlg = recipe.paddingCtlg:copy()
+	for id, amt in pairs(stockOffsetCtlg) do
+		if amt == recipe.PADDING_GOAL then
+			stockOffsetCtlg[id] = -goalsCtlg[id]
+		elseif amt == recipe.PADDING_HALF_GOAL then
+			stockOffsetCtlg[id] = -math.ceil(goalsCtlg[id] / 2)
+		else
+			stockOffsetCtlg[id] = -amt
+		end
+	end
+
 	-- Calculate actual craftable unit count
-	local actualScheduled, lacksCtlg = St.tryUse(afterFeedCtlg, recipe.unitInput, countTry)
+	local actualScheduled, lacksCtlg = St.tryUse(afterFeedCtlg, stockOffsetCtlg, Helper.IO2Catalogue(recipe.unitInput), countTry)
 	
 	-- Mark lacking materials for report
 	req.lackingCtlg = req.lackingCtlg or Ctlg:new()
@@ -361,7 +374,7 @@ function M.init()
 	refreshMachines()
 end
 --------------------------------------------
-function M.makeFactoryCraftSchedule(craftReqs, afterFeedCtlg)
+function M.makeFactoryCraftSchedule(craftReqs, afterFeedCtlg, goalsCtlg)
 	assert(afterFeedCtlg ~= nil)
 	
 	local resultSchedule = Ctlg:new()
@@ -375,6 +388,7 @@ function M.makeFactoryCraftSchedule(craftReqs, afterFeedCtlg)
 		resultSchedule = resultSchedule,
 		afterFeedCtlg = afterFeedCtlg,
 		expectedOutputCtlg = expectedOutputCtlg,
+		goalsCtlg = goalsCtlg,
 	}
 	
 	for _, req in ipairs(craftReqs) do
