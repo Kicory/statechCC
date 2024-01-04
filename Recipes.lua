@@ -6,6 +6,7 @@ local I = FullDict.Item
 local F = FullDict.Fluid
 local Machine = FullDict.Machine
 local MultiblockMachine = FullDict.MultiblockMachine
+local CustomMachine = FullDict.CustomMachine
 local M = FullDict.MatType
 
 local Recipes = RecipeMaker.Recipes
@@ -668,6 +669,12 @@ do -- Assembler Recipes
 	m(I.blastproof_alloy_curved_plate, 2, I.large_motor, 1, I.robot_arm, 2, I.he_uranium_rod, 18, nil, F.soldering_alloy, 500, F.helium, 100, nil, I.he_uranium_fuel_rod, 1, nil, nil, 16)
 	m(I.blastproof_alloy_curved_plate, 2, I.large_motor, 1, I.robot_arm, 2, I.le_mox_rod, 18, nil, F.soldering_alloy, 500, F.helium, 100, nil, I.le_mox_fuel_rod, 1, nil, nil, 16)
 	m(I.blastproof_alloy_curved_plate, 2, I.large_motor, 1, I.robot_arm, 2, I.he_mox_rod, 18, nil, F.soldering_alloy, 500, F.helium, 100, nil, I.he_mox_fuel_rod, 1, nil, nil, 16)
+end
+-------------------------------------------------
+do -- Test Recipes
+	local m = Recipes.makeSingleRecipeMaker(CustomMachine.trashCan, true, true, false, false)
+	m(nil, F.water, 1000, nil, "eme", 0):setPaddings(F.water, 2000):setAlwaysProc()
+	m(I.emerald_tiny_dust, 16, nil, nil, "eme", 0):setPaddings(I.emerald_tiny_dust, 64):setAlwaysProc()
 end
 -------------------------------------------------
 local function recipeSort(a, b)

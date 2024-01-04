@@ -1,6 +1,9 @@
 local MM = require("Dict").MultiblockMachine
+local OM = require("Dict").CustomMachine
 
-local BigMachines = {
+local OtherMachines = {}
+
+OtherMachines.BigMachines = {
 	[MM.smelterMega] = {
 		["modern_industrialization:mega_smelter_1"] = {
 			wrapped = nil, -- will filled by __Machines.refreshMachines
@@ -33,4 +36,17 @@ local BigMachines = {
 	--]]
 }
 
-return BigMachines
+OtherMachines.CustomMachines = {
+	[OM.trashCan] = {
+		["modern_industrialization:trash_can_0"] = {
+			hasFluid = true,
+			fluidInputs = {
+				"modern_industrialization:configurable_tank_6",
+			},
+			hasItem = true,
+			itemInput = "modern_industrialization:configurable_chest_6",
+		}
+	}
+}
+
+return OtherMachines

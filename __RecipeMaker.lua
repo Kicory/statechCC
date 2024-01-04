@@ -68,6 +68,7 @@ function Recipe:setPaddings(...)
 		assert(type(ps[idx]) == "string", debug.traceback())
 		self.paddingCtlg[ps[idx]] = ps[idx + 1]
 	end
+	return self
 end
 
 -- Mini class RecipeList (multiple recipes)

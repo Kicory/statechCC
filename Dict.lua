@@ -1264,6 +1264,10 @@ Dict.MultiblockMachine = {
 	bigComputer = I.singularity_forge,
 }
 
+Dict.CustomMachine = {
+	trashCan = I.trash_can,
+}
+
 Dict.PpType = {
 	fluidStorage = "fluid_storage",
 	itemStorage = "item_storage",

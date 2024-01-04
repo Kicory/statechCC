@@ -1,5 +1,6 @@
 local MachineProperty = require("MachineProperties")
-local BigMachines = require("MultiblockMachines")
+local BigMachines = require("OtherMachines").BigMachines
+local CustomMachines = require("OtherMachines").CustomMachines
 local TH = require("__ThreadingHelpers")
 local Helper = require("__Helpers")
 local Ctlg = require("__Catalouge")
@@ -19,7 +20,7 @@ local M = {}
 local machineList = nil
 local machineNames = nil
 local factoryStatus = nil
-local paraCostLimit = 256
+local paraCostLimit = 250
 local maxTryWhenEmpty = 2
 --------------------------------------------
 local function refreshMachines()
@@ -37,14 +38,12 @@ local function refreshMachines()
 	factoryStatus = {}
 
 	local function registerMachine(machineType, machineName, machineWrapped)
-		local info = {
-			wrapped = machineWrapped,
-		}
-
+		local info = {}
+		info.wrapped = machineWrapped
 		info.hasFluid = peripheral.hasType(machineName, PpType.fluidStorage)
 		info.hasItem = peripheral.hasType(machineName, PpType.itemStorage)
 
-		if (peripheral.hasType(machineName, PpType.miCrafter)) then
+		if peripheral.hasType(machineName, PpType.miCrafter) then
 			info.getCraftingInfo = machineWrapped.getCraftingInformation
 			info.isBusy = machineWrapped.isBusy
 		end
@@ -59,30 +58,41 @@ local function refreshMachines()
 	end
 
 	-- Find peripherals
-	for _, machineType in pairs(singleBlockMachineTypes) do
-		machineList[machineType] = {}
-		machineNames[machineType] = {}
-		peripheral.find(machineType, function(machineName, machineWrapped) registerMachine(machineType, machineName, machineWrapped) end)
+	for _, mt in pairs(singleBlockMachineTypes) do
+		machineList[mt] = {}
+		machineNames[mt] = {}
+		peripheral.find(mt, function(machineName, machineWrapped) registerMachine(mt, machineName, machineWrapped) end)
 	end
 
 	-- Add multiblock machines manually
-	for machineType, bigMachinesOfType in pairs(BigMachines) do
-		machineList[machineType] = {}
-		machineNames[machineType] = {}
-		for machineName, info in pairs(bigMachinesOfType) do
-			info.wrapped = peripheral.wrap(machineName)
+	for mt, tl in pairs(BigMachines) do
+		machineList[mt] = {}
+		machineNames[mt] = {}
+		for mn, info in pairs(tl) do
+			info.wrapped = peripheral.wrap(mn)
 			info.getCraftingInfo = info.wrapped.getCraftingInformation
 			info.isBusy = info.wrapped.isBusy
-			machineList[machineType][machineName] = info
-			table.insert(machineNames[machineType], machineName)
+			machineList[mt][mn] = info
+			table.insert(machineNames[mt], mn)
+		end
+	end
+
+	-- Add custom machines (not mi crafters) manually
+	for mt, tl in pairs(CustomMachines) do
+		machineList[mt] = {}
+		machineNames[mt] = {}
+		for mn, info in pairs(tl) do
+			info.wrapped = peripheral.wrap(mn)
+			machineList[mt][mn] = info
+			table.insert(machineNames[mt], mn)
 		end
 	end
 
 	-- Create empty factoryStatus
-	for t, ms in pairs(machineList) do
-		for mn, info in pairs(ms) do
+	for mt, tl in pairs(machineList) do
+		for mn, info in pairs(tl) do
 			factoryStatus[mn] = {
-				type = t,
+				type = mt,
 				storageInfo = nil,
 				tankInfo = nil,
 				craftingInfo = nil,
@@ -170,10 +180,16 @@ local function getMachineReadiness(machineName, recipe)
 
 	local empty = isEmptyMachine(storageInfo, tankInfo)
 	local fitUnits = inputFitCount(recipe.unitInput, storageInfo, tankInfo)
-	local minPowOk = craftingInfo.maxRecipeCost >= recipe.minimumPower
+	local minPowOK
+	if craftingInfo.maxRecipeCost ~= nil then
+		minPowOK = craftingInfo.maxRecipeCost >= recipe.minimumPower
+	else
+		-- Custom machinary; do not have restriction
+		minPowOK = true
+	end
 	local craftSp = getCraftingSpeed(craftingInfo)
 	
-	return empty, fitUnits, minPowOk, craftSp
+	return empty, fitUnits, minPowOK, craftSp
 end
 
 local function markMachine(machineName, info, req, states)
@@ -509,27 +525,20 @@ function M.feedFactory(scd, fromAE)
 		fedCtlg[fluidID] = (fedCtlg[fluidID] or 0) + fedAmt
 	end
 	local function getConsistantFluidHatchMatches(fluidCtlg, hatchList)
-		local fluidIDList = {}
-		for k in pairs(fluidCtlg) do
-			fluidIDList[#fluidIDList + 1] = k
-		end
+		local fluidIDList = fluidCtlg:getKeys()
+		assert(#fluidIDList <= #hatchList, debug.traceback())
 		table.sort(fluidIDList)
 		local hatchMatches = {}
-		for idx, hatch in ipairs(hatchList) do
-			local idToFeed = fluidIDList[idx]
-			hatchMatches[hatch] = {
-				fluidID = idToFeed,
-				amt = fluidCtlg[idToFeed]
+		for idx, fid in ipairs(fluidIDList) do
+			hatchMatches[hatchList[idx]] = {
+				fluidID = fid,
+				amt = fluidCtlg[fid]
 			}
 		end
 		return hatchMatches
 	end
 	local function paraCost(inputCtlg)
-		local inputIDs = {}
-		for k in pairs(inputCtlg) do
-			inputIDs[#inputIDs + 1] = k
-		end
-		return #inputIDs
+		return #(inputCtlg:getKeys())
 	end
 
 	local accParaCost = 0
@@ -556,7 +565,7 @@ function M.feedFactory(scd, fromAE)
 			end
 		else
 			-- Multiblock machine
-			local hatchMatches = getConsistantFluidHatchMatches(craftScd.input.fluid, craftScd.fluidInputs)
+			local hatchMatches = getConsistantFluidHatchMatches(Ctlg:new(craftScd.input.fluid), craftScd.fluidInputs)
 			for hatch, fluidFeedInfo in pairs(hatchMatches) do
 				feedJobs[#feedJobs + 1] = function() feedFluid(hatch, fluidFeedInfo.fluidID, fluidFeedInfo.amt) end
 			end
