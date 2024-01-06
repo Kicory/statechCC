@@ -92,6 +92,13 @@ function Helper.printRowOf(widthRatios, backColors, textColors, contents, monito
 	monitor.setCursorPos(x, y + 1)
 end
 
+function Helper.updateTermLine(text)
+	local x, y = term.getSize()
+	term.setCursorPos(1, y)
+	term.clearLine()
+	write(text)
+end
+
 function Helper.dispNameMaker(id)
 	local colonEnd, electricEnd, _
 	
@@ -142,7 +149,6 @@ function Helper.makeIDListOver(materials, templates, itemIdIndex)
 	end
 	return ret
 end
-
 
 function Helper.IO2Catalogue(IO)
 	local ret = Ctlg:new()

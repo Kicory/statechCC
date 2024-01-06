@@ -11,11 +11,14 @@ local SeedGoalsCtlg = Goals.SeedGoalsCtlg
 -- Main program
 local Chef = {}
 local moni
+local codeInputSide
 
 function Chef.init()
 	M.init()
 	St.init()
 	Goals.init(DirectProd, Recipes.productionGraph)
+	write("Where is Owner? > ")
+	codeInputSide = read()
 	moni = peripheral.find("monitor")
 end
 
@@ -40,35 +43,43 @@ function Chef.step(prevLackingStatus, prevMachineLackingStatus)
 	St.applyExpectedCatalogue(expectedCtlg)
 	St.applyHarvestedCatalogue(harvestedCtlg)
 
-	if (rs.getInput("left")) then
-		if moni then
-			local x, y = moni.getCursorPos()
-			local xx, yy = moni.getSize()
-			moni.setCursorPos(xx / 2 - 2, y + (yy - y) / 2)
-			moni.write("FROZEN")
-		end
-		while rs.getInput("left") do
-			os.sleep(0.1)
+	return lackingStatus, machineLackingStatus
+end
+
+function Chef.maintenance()
+	local actionCode = rs.getAnalogInput(codeInputSide)
+	while actionCode ~= 0 do
+		if actionCode == 1 then
+			os.sleep(0.05)
 			M.harvestToBufferSlow()
-			os.sleep(0.01)
+			os.sleep(0.05)
 			-- Pulling back outputs from factory should not stop
 			St.applyHarvestedCatalogue(M.harvestFromBuffer(St.bufferAE, St.BufferStorages, St.BufferTanks, St.mainAE))
+		elseif actionCode == 2 then
+			os.sleep(0.05)
+		elseif actionCode == 3 then
+			error("Chef halted by Owner!")
 		end
+		actionCode = rs.getAnalogInput(codeInputSide)
 	end
-	return lackingStatus, machineLackingStatus
+	package.loaded.OtherMachines = nil
+	M.init()
 end
 
 print("Initializing...")
 local cur = os.clock()
 Chef.init()
-print("Initializing took " .. Helper.tickFrom(cur) .. " ticks")
+print("Initializing took " .. Helper.tickFrom(cur) .. " ticks \n")
 
 -- error("OK")
 
 local lackingStatus = {}
 local machineLackingStatus = {}
+local stepsLasted = 0
 while true do
+	Chef.maintenance()
 	local cur = os.clock()
 	lackingStatus, machineLackingStatus = Chef.step(lackingStatus, machineLackingStatus)
-	print(Helper.tickFrom(cur) .. " ticks for previous step.")
+	stepsLasted = stepsLasted + 1
+	Helper.updateTermLine(Helper.tickFrom(cur) .. " ticks from last step (" .. stepsLasted .. ")")
 end

@@ -1,6 +1,4 @@
 local MachineProperty = require("MachineProperties")
-local BigMachines = require("OtherMachines").BigMachines
-local CustomMachines = require("OtherMachines").CustomMachines
 local TH = require("__ThreadingHelpers")
 local Helper = require("__Helpers")
 local Ctlg = require("__Catalouge")
@@ -64,27 +62,33 @@ local function refreshMachines()
 		peripheral.find(mt, function(machineName, machineWrapped) registerMachine(mt, machineName, machineWrapped) end)
 	end
 
+	local BigMachines = require("OtherMachines").BigMachines
 	-- Add multiblock machines manually
 	for mt, tl in pairs(BigMachines) do
 		machineList[mt] = {}
 		machineNames[mt] = {}
 		for mn, info in pairs(tl) do
-			info.wrapped = peripheral.wrap(mn)
-			info.getCraftingInfo = info.wrapped.getCraftingInformation
-			info.isBusy = info.wrapped.isBusy
-			machineList[mt][mn] = info
-			table.insert(machineNames[mt], mn)
+			if peripheral.isPresent(mn) then
+				info.wrapped = peripheral.wrap(mn)
+				info.getCraftingInfo = info.wrapped.getCraftingInformation
+				info.isBusy = info.wrapped.isBusy
+				machineList[mt][mn] = info
+				table.insert(machineNames[mt], mn)
+			end
 		end
 	end
 
+	local CustomMachines = require("OtherMachines").CustomMachines
 	-- Add custom machines (not mi crafters) manually
 	for mt, tl in pairs(CustomMachines) do
 		machineList[mt] = {}
 		machineNames[mt] = {}
 		for mn, info in pairs(tl) do
-			info.wrapped = peripheral.wrap(mn)
-			machineList[mt][mn] = info
-			table.insert(machineNames[mt], mn)
+			if peripheral.isPresent(mn) or string.find(mn, "trash_can") then
+				info.wrapped = peripheral.wrap(mn)
+				machineList[mt][mn] = info
+				table.insert(machineNames[mt], mn)
+			end
 		end
 	end
 
@@ -514,16 +518,29 @@ function M.feedFactory(scd, fromAE)
 	local fedCtlg = Ctlg:new()
 	local expectedOutputCtlg = Ctlg:new()
 
-	local function feedItem(storageName, itemID, limit)
-		local fedCount = fromAE.pushItem(storageName, itemID, limit)
-		assert(fedCount == limit, storageName .. " -- " .. itemID .. " should fed: " .. limit .. ", actual: " .. fedCount)
-		fedCtlg[itemID] = (fedCtlg[itemID] or 0) + fedCount
+	local function pushMaterial(toName, id, limit, isItem)
+		if isItem then
+			return fromAE.pushItem(toName, id, limit)
+		else
+			return fromAE.pushFluid(toName, limit, id)
+		end
 	end
-	local function feedFluid(tankName, fluidID, limit)
-		local fedAmt = fromAE.pushFluid(tankName, limit, fluidID)
-		assert(fedAmt == limit, tankName .. " -- " .. fluidID .. " should fed: " .. limit .. ", actual: " .. fedAmt)
-		fedCtlg[fluidID] = (fedCtlg[fluidID] or 0) + fedAmt
+
+	local function feedMaterial(toName, matID, limit, isItem)
+		local fedAmt = pushMaterial(toName, matID, limit, isItem)
+		local trial = 0
+		while fedAmt ~= limit do
+			trial = trial + 1
+			printError(toName .. " -- " .. matID .. " should fed: " .. limit .. ", actual: " .. fedAmt .. ", Trial: " .. trial)
+			if trial >= 3 then
+				printError("!!!!!!!!!!!!!!!!!!!!\nDO SOMETHING and press any key.\n!!!!!!!!!!!!!!!!!!!!")
+				os.pullEvent("key")
+			end
+			fedAmt = fedAmt + pushMaterial(toName, matID, limit - fedAmt, isItem)
+		end
+		fedCtlg[matID] = (fedCtlg[matID] or 0) + fedAmt
 	end
+
 	local function getConsistantFluidHatchMatches(fluidCtlg, hatchList)
 		local fluidIDList = fluidCtlg:getKeys()
 		assert(#fluidIDList <= #hatchList, debug.traceback())
@@ -554,20 +571,20 @@ function M.feedFactory(scd, fromAE)
 		-- Item feeding
 		local itemTarget = craftScd.itemInput or name
 		for itemID, count in pairs(craftScd.input.item or {}) do
-			feedJobs[#feedJobs + 1] = function() feedItem(itemTarget, itemID, count) end
+			feedJobs[#feedJobs + 1] = function() feedMaterial(itemTarget, itemID, count, true) end
 		end
 		
 		-- Fluid feeding
 		if not craftScd.fluidInputs then
 			-- Singleblock machine
 			for fluidID, amt in pairs(craftScd.input.fluid or {}) do
-				feedJobs[#feedJobs + 1] = function() feedFluid(name, fluidID, amt) end
+				feedJobs[#feedJobs + 1] = function() feedMaterial(name, fluidID, amt, false) end
 			end
 		else
 			-- Multiblock machine
 			local hatchMatches = getConsistantFluidHatchMatches(Ctlg:new(craftScd.input.fluid), craftScd.fluidInputs)
 			for hatch, fluidFeedInfo in pairs(hatchMatches) do
-				feedJobs[#feedJobs + 1] = function() feedFluid(hatch, fluidFeedInfo.fluidID, fluidFeedInfo.amt) end
+				feedJobs[#feedJobs + 1] = function() feedMaterial(hatch, fluidFeedInfo.fluidID, fluidFeedInfo.amt, false) end
 			end
 		end
 	

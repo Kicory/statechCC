@@ -36,16 +36,28 @@ OtherMachines.BigMachines = {
 	--]]
 }
 
+local trashCanConfChest = "modern_industrialization:configurable_chest_6"
+local trashCanConfTank = "modern_industrialization:configurable_tank_6"
+local trashCanInfo = {
+	hasFluid = true,
+	fluidInputs = {
+		trashCanConfTank,
+	},
+	hasItem = true,
+	itemInput = trashCanConfChest,
+}
+
 OtherMachines.CustomMachines = {
 	[OM.trashCan] = {
-		["modern_industrialization:trash_can_0"] = {
-			hasFluid = true,
-			fluidInputs = {
-				"modern_industrialization:configurable_tank_6",
-			},
-			hasItem = true,
-			itemInput = "modern_industrialization:configurable_chest_6",
-		}
+		["trash_can_1"] = trashCanInfo,
+		["trash_can_2"] = trashCanInfo,
+		["trash_can_3"] = trashCanInfo,
+		["trash_can_4"] = trashCanInfo,
+		["trash_can_5"] = trashCanInfo,
+		["trash_can_6"] = trashCanInfo,
+		["trash_can_7"] = trashCanInfo,
+		["trash_can_8"] = trashCanInfo,
+		["trash_can_9"] = trashCanInfo,
 	}
 }
 
