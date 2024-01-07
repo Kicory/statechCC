@@ -4,177 +4,13 @@ local Item = require("Dict").Item
 local Fluid = require("Dict").Fluid
 local Helper = require("__Helpers")
 local Ctlg = require("__Catalouge")
-
-local function basePowerChecker(basePowerRequired)
-	return function (machineInfo) return machineInfo.getBasePower() >= basePowerRequired end
-end
+local Recipe = require("__RecipeObjects").Recipe
+local RecipeList = require("__RecipeObjects").RecipeList
 
 local Recipes = {}
 
--- Mini class Recipe
-local Recipe = {
-	PRIO_ULTIMATE = 100,
-	PRIO_HIGH = 90,
-	PRIO_NORMAL = 80,
-	PRIO_LOW = 70,
-	PRIO_RELUCTANT = 60,
-	PADDING_GOAL = "GOAL",
-	PADDING_HALF_GOAL = "HALF_GOAL",
-}
-
-local recipeMt = {
-	__index = Recipe
-}
-
-function Recipe:new(o)
-	assert(o ~= nil)
-	setmetatable(o, recipeMt)
-	return o
-end
-
-function Recipe:setPriority(prio)
-	self.priority = prio
-	return self
-end
-
---- Only materials in idList will counted as output, and used when calculating required crafting
-function Recipe:setEffectiveOutput(...)
-	local ps = table.pack(...)
-	local set = {}
-	for _, v in ipairs(ps) do
-		set[v] = true
-	end
-	self.effUnitOutputCtlg:filter(function(id, _) return set[id] ~= nil end)
-	return self
-end
-
-function Recipe:setAlwaysProc()
-	self.alwaysProc = true
-	return self
-end
-
-function Recipe:setOpportunistic(...)
-	self.opportunistic = true
-	local ps = table.pack(...)
-	for _, mat in ipairs(ps) do
-		self.paddingCtlg[mat] = Recipe.PADDING_GOAL
-	end
-	return self
-end
-
-function Recipe:setPaddings(...)
-	local ps = table.pack(...)
-	for idx = 1, #ps, 2 do
-		assert(type(ps[idx]) == "string", debug.traceback())
-		self.paddingCtlg[ps[idx]] = ps[idx + 1]
-	end
-	return self
-end
-
--- Mini class RecipeList (multiple recipes)
-local RecipeList = { }
-
-local recipeListMt = {
-	__index = RecipeList
-}
-
-function RecipeList:new(o)
-	assert(o ~= nil)
-	setmetatable(o, recipeListMt)
-	return o
-end
-
-function RecipeList:setPriority(prio)
-	for _, r in ipairs(self) do
-		r:setPriority(prio)
-	end
-	return self
-end
-
---- Only materials in idList will counted as output, and used when calculating required crafting
-function RecipeList:setEffectiveOutput(...)
-	for _, r in ipairs(self) do
-		r:setEffectiveOutput(...)
-	end
-	return self
-end
-
-function RecipeList:setAlwaysProc()
-	for _, r in ipairs(self) do
-		r:setAlwaysProc()
-	end
-	return self
-end
-
-function RecipeList:setOpportunistic(...)
-	for _, r in ipairs(self) do
-		r:setOpportunistic(...)
-	end
-	return self
-end
-
-function RecipeList:setPaddings(...)
-	for _, r in ipairs(self) do
-		r:setPaddings(...)
-	end
-	return self
-end
------------------------------------------------------------------
---- Add to Recipes list
----@param specs table Recipe info
----@return table Added Recipe (Can be customized)
-function Recipes.add(specs)
-	if (not specs.dispName) or (type(specs.dispName) ~= "string") then error("Recipe Display Name not specified!:" .. debug.traceback()) end
-
-	local dispName = specs.dispName
-
-	if not specs.unitInput then error("No input for recipe: " .. dispName) end
-	if not specs.unitOutput then error("No output for recipe: " .. dispName) end
-	if not specs.machineType then error("No machine type specified for recipe: " .. dispName) end
-	if not specs.minimumPower then error("No machine minimum power requirement: " .. dispName) end
-
-	local order = #Recipes + 1
-	local r = Recipe:new {
-		-- Lower comes first
-		rank = order,
-		priority = Recipe.PRIO_NORMAL,
-		dispName = specs.dispName,
-		unitInput = specs.unitInput,
-		unitOutput = specs.unitOutput,
-		machineType = specs.machineType,
-		minimumPower = specs.minimumPower,
-		-- Outputs considered as result of this recipe when calculating required crafting.
-		-- e.g., hydrogen output from butadiene production should not considered as hydrogen production method.
-		effUnitOutputCtlg = Helper.IO2Catalogue(specs.unitOutput),
-		-- Schedule if there is input material.
-		alwaysProc = false,
-		-- Not used for goal maker calculation (only craft when resource is available)
-		opportunistic = false,
-		paddingCtlg = Ctlg:new(),
-	}
-	Recipes[order] = r
-
-	-- Return r to customize later
-	return r
-end
-
-function Recipes.getMaterialsUsedEmptyCtlg()
-	local ret = Ctlg:new()
-	for _, r in ipairs(Recipes) do
-		for id, _ in pairs(r.unitInput.item or {}) do
-			ret[id] = 0
-		end
-		for id, _ in pairs(r.unitInput.fluid or {}) do
-			ret[id] = 0
-		end
-		for id, _ in pairs(r.unitOutput.item or {}) do
-			ret[id] = 0
-		end
-		for id, _ in pairs(r.unitOutput.fluid or {}) do
-			ret[id] = 0
-		end
-	end
-	return ret
+local function basePowerChecker(basePowerRequired)
+	return function (machineInfo) return machineInfo.getBasePower() >= basePowerRequired end
 end
 
 local function doSingleIO(ps, tab, idx, multiplier)
@@ -199,6 +35,48 @@ local function getRecipeTemplate(mt)
 			fluid = {}
 		}
 	}
+end
+
+--- Add to Recipes list
+---@param specs table Recipe info
+---@return table Added Recipe (Can be customized)
+function Recipes.add(specs)
+	if (not specs.dispName) or (type(specs.dispName) ~= "string") then error("Recipe Display Name not specified!:" .. debug.traceback()) end
+
+	local dispName = specs.dispName
+
+	if not specs.unitInput then error("No input for recipe: " .. dispName) end
+	if not specs.unitOutput then error("No output for recipe: " .. dispName) end
+	if not specs.machineType then error("No machine type specified for recipe: " .. dispName) end
+	if not specs.minimumPower then error("No machine minimum power requirement: " .. dispName) end
+
+	local order = #Recipes + 1
+	local r = Recipe:new {
+		-- Lower comes first
+		rank = order,
+		priority = Recipe.PRIO_NORMAL,
+		dispName = specs.dispName,
+		unitInput = specs.unitInput,
+		unitOutput = specs.unitOutput,
+		machineType = specs.machineType,
+		minimumPower = specs.minimumPower,
+		-- Inputs expected to used when conducting 1 unit of this recipe
+		-- This is same with base unitInput most of the time.
+		-- But if this recipe is the head of process chain, then this ctlg should contain all inputs required to finish the chain.
+		effUnitInputCtlg = Helper.IO2Catalogue(specs.unitInput),
+		-- Outputs considered as result of this recipe when calculating required crafting.
+		-- e.g., hydrogen output from butadiene production should not considered as hydrogen production method.
+		effUnitOutputCtlg = Helper.IO2Catalogue(specs.unitOutput),
+		-- Schedule if there is input material.
+		alwaysProc = false,
+		-- Not used for goal maker calculation (only craft when resource is available)
+		opportunistic = false,
+		paddingCtlg = Ctlg:new(),
+	}
+	Recipes[order] = r
+
+	-- Return r to customize later
+	return r
 end
 
 --- Make single recipe maker
@@ -463,6 +341,9 @@ function Recipes.makeSingleChemicalReactorRecipe(...)
 	idxBig = idxBig + 1
 	rBig.minimumPower = ps[idxBig] * 2
 	local bigRecipe = Recipes.add(rBig)
+	function bigRecipe:setChainHead(chainInputCtlg, chainOutputCtlg)
+		getmetatable(self).__index.setChainHead(self, chainInputCtlg * 4, chainOutputCtlg * 4)
+	end
 	
 	local idx = 1
 	idx = doSingleIO(ps, r.unitInput.item, idx)
@@ -477,8 +358,24 @@ function Recipes.makeSingleChemicalReactorRecipe(...)
 	local ret = RecipeList:new({singleRecipe, bigRecipe})
 	return ret
 end
+-------------------------------------------------------------
+function Recipes.getMaterialsUsedEmptyCtlg()
+	local ret = Ctlg:new()
+	for _, r in ipairs(Recipes) do
+		for id, _ in pairs(r.unitInput.item or {}) do
+			ret[id] = 0
+		end
+		for id, _ in pairs(r.unitInput.fluid or {}) do
+			ret[id] = 0
+		end
+		for id, _ in pairs(r.unitOutput.item or {}) do
+			ret[id] = 0
+		end
+		for id, _ in pairs(r.unitOutput.fluid or {}) do
+			ret[id] = 0
+		end
+	end
+	return ret
+end
 
-return {
-	Recipes = Recipes,
-	Recipe = Recipe
-}
+return Recipes
