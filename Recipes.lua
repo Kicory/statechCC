@@ -713,7 +713,6 @@ end
 -------------------------------------------------
 do -- Test Recipes
 	local m = Recipes.makeSingleRecipeMaker(CustomMachine.trashCan, true, true, false, false)
-	m(I.emerald_tiny_dust, 16, nil, nil, "eme", 0):setPaddings(I.emerald_tiny_dust, 64):setAlwaysProc()
 end
 -------------------------------------------------
 local function recipeSort(a, b)
@@ -820,7 +819,7 @@ end
 
 -- checkCycles()
 
-do -- Make production Graph
+local function getProdGraph()
 	local prodDict = {}
 	local function find(l, ctlg)
 		for i = 1, #l do
@@ -844,7 +843,9 @@ do -- Make production Graph
 			end
 		end
 	end
-	Recipes.productionGraph = prodDict
+	return prodDict
 end
+
+Recipes.productionGraph = getProdGraph()
 
 return Recipes

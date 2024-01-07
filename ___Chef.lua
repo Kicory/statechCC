@@ -1,12 +1,12 @@
 local Recipes = require("Recipes")
-local Goals = require("Goals")
+local GoalMng = require("__GoalMaker")
 local M = require("__Machines")
 local St = require("__Storage")
 local Helper = require("__Helpers")
 local DirectProd = require("Dict").DirectProd
 local Ctlg = require("__Catalouge")
 
-local SeedGoalsCtlg = Goals.SeedGoalsCtlg
+local SeedGoalsCtlg = GoalMng.SeedGoalsCtlg
 
 -- Main program
 local Chef = {}
@@ -16,7 +16,7 @@ local codeInputSide
 function Chef.init()
 	M.init()
 	St.init()
-	Goals.init(DirectProd, Recipes.productionGraph)
+	GoalMng.init(DirectProd, Recipes.productionGraph)
 	local owner = peripheral.find("computer")
 	if owner then
 		codeInputSide = peripheral.getName(owner)
@@ -28,14 +28,14 @@ function Chef.step(prevLackingStatus, prevMachineLackingStatus)
 	St.refreshCatalogue() -- Consumes ticks
 	
 	if moni then
-		St.printStatusToMonitor(Goals.DerivedGoalsCtlg, prevLackingStatus, prevMachineLackingStatus, moni)
+		St.printStatusToMonitor(GoalMng.DerivedGoalsCtlg, prevLackingStatus, prevMachineLackingStatus, moni)
 	end
 
-	local craftRequirements = St.getRequirements(Recipes, Goals.DerivedGoalsCtlg)
+	local craftRequirements = St.getRequirements(Recipes, GoalMng.DerivedGoalsCtlg)
 
 	local harvestedCtlg = M.updateFactory(St.mainAE) -- consumes ticks
 
-	local factoryScd, lackingStatus, machineLackingStatus = M.makeFactoryCraftSchedule(craftRequirements, St.getCatalogueCopy(), Goals.DerivedGoalsCtlg)
+	local factoryScd, lackingStatus, machineLackingStatus = M.makeFactoryCraftSchedule(craftRequirements, St.getCatalogueCopy(), GoalMng.DerivedGoalsCtlg)
 
 	local fedCtlg, expectedCtlg = M.feedFactory(factoryScd, St.mainAE)
 	
@@ -64,8 +64,8 @@ function Chef.maintenance()
 		end
 		actionCode = rs.getAnalogInput(codeInputSide)
 	end
-	package.loaded.OtherMachines = nil
 	M.init()
+	GoalMng.init(DirectProd, Recipes.productionGraph)
 end
 
 print("Initializing...")

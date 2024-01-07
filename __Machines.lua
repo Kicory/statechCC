@@ -291,6 +291,7 @@ local function makeCraftSchedule(req, states)
 end
 --------------------------------------------
 function M.init()
+	package.loaded.OtherMachines = nil
 	refreshMachines()
 end
 --------------------------------------------
@@ -473,7 +474,7 @@ function M.feedFactory(scd, fromAE)
 			printError(toName .. " -- " .. matID .. " should fed: " .. limit .. ", actual: " .. fedAmt .. ", Trial: " .. trial)
 			if trial >= 3 then
 				printError("!!!!!!!!!!!!!!!!!!!!\nDO SOMETHING and press any key.\n!!!!!!!!!!!!!!!!!!!!")
-				os.pullEvent("key")
+				Helper.doAlarmUntilEvent()
 			end
 			fedAmt = fedAmt + pushMaterial(toName, matID, limit - fedAmt, isItem)
 		end

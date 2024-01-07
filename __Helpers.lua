@@ -92,6 +92,21 @@ function Helper.printRowOf(widthRatios, backColors, textColors, contents, monito
 	monitor.setCursorPos(x, y + 1)
 end
 
+function Helper.doAlarmUntilEvent()
+	local speakers = {peripheral.find("speaker")}
+	local function playAlarm()
+		while true do
+			table.foreach(speakers, function(_, s) os.sleep(0.7) s.playNote("bell", 100, 1) end)
+			os.sleep(0.7)
+		end
+	end
+	local function waitUntilAnyKey()
+		os.pullEvent("key")
+	end
+
+	parallel.waitForAny(playAlarm, waitUntilAnyKey)
+end
+
 function Helper.updateTermLine(text)
 	local x, y = term.getSize()
 	term.setCursorPos(1, y)
