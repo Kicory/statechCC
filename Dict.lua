@@ -1347,7 +1347,7 @@ Dict.DirectProd = {
 
 	-- Oil Drilling Rig
 	[F.lava]							= true,
-	[F.brine]								= true, -- Derived from salt water
+		[F.brine]							= true, -- Derived from salt water
 	-- [F.salt_water]						= true,
 	[F.crude_oil]						= true,
 	[F.shale_oil]						= true,
@@ -1356,7 +1356,7 @@ Dict.DirectProd = {
 	-- Bronze Drill
 	[I.iron_ore]						= true,
 		[I.coal_dust]						= true, -- Derived from coal ore and coal
-	-- [I.coal_ore]						= true,
+	-- [I.coal_ore]							= true,
 	-- [I.lignite_coal_ore]					= true,
 	[I.copper_ore]						= true,
 	[I.tin_ore]							= true,
@@ -1390,7 +1390,7 @@ Dict.DirectProd = {
 	[I.fluorite_ore]					= true,
 	[I.diamond_ore]						= true,
 	-- [I.lapis_ore]						= true,
-	[I.lead_ore]						= true,
+	-- [I.lead_ore]							= true,
 	[I.nickel_ore]						= true,
 	[I.bauxite_ore]						= true,
 	[I.salt_ore]						= true,
