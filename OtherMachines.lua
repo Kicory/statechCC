@@ -20,7 +20,6 @@ OtherMachines.BigMachines = {
 			isBusy = nil, -- will filled by __Machines.refreshMachines
 		}
 	},
-	--
 	[MM.chemicalReactorLarge] = {
 	 	["modern_industrialization:large_chemical_reactor_2"] = {
 	 		hasFluid = true,
@@ -32,8 +31,17 @@ OtherMachines.BigMachines = {
 	 		hasItem = true,
 	 		itemInput = "modern_industrialization:advanced_item_input_hatch_0",
 	 	}
+	},
+	[MM.blastFurnaceCupr] = {
+		["modern_industrialization:electric_blast_furnace_0"] = {
+			hasFluid = true,
+			fluidInputs = {
+				"modern_industrialization:advanced_fluid_input_hatch_1",
+			},
+			hasItem = true,
+			itemInput = "modern_industrialization:advanced_item_input_hatch_2",
+		}
 	}
-	--]]
 }
 
 local trashCanConfChest = "modern_industrialization:configurable_chest_6"

@@ -56,6 +56,7 @@ function Recipes.add(specs)
 		rank = order,
 		priority = Recipe.PRIO_NORMAL,
 		dispName = specs.dispName,
+		-- 
 		unitInput = specs.unitInput,
 		unitOutput = specs.unitOutput,
 		machineType = specs.machineType,
@@ -111,6 +112,13 @@ function Recipes.makeSingleRecipeMaker(mt, itemIn, fluidIn, itemOut, fluidOut)
 		idx = idx + 1
 		r.minimumPower = ps[idx]
 		return Recipes.add(r)
+	end
+end
+
+function Recipes.makeChainRecipeMaker(mt, itemIn, fluidIn)
+	return function(...)
+		local single = Recipes.makeSingleRecipeMaker(mt, itemIn, fluidIn, false, false)
+		return single(...):setAlwaysProc()
 	end
 end
 -----------------------------------------------------------------------------------
@@ -341,8 +349,8 @@ function Recipes.makeSingleChemicalReactorRecipe(...)
 	idxBig = idxBig + 1
 	rBig.minimumPower = ps[idxBig] * 2
 	local bigRecipe = Recipes.add(rBig)
-	function bigRecipe:setChainHead(chainInputCtlg, chainOutputCtlg)
-		getmetatable(self).__index.setChainHead(self, chainInputCtlg * 4, chainOutputCtlg * 4)
+	function bigRecipe:setChainHead(otherChainInputCtlg)
+		getmetatable(self).__index.setChainHead(self, otherChainInputCtlg * 4)
 	end
 	
 	local idx = 1

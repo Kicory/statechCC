@@ -63,9 +63,9 @@ function RecipeObjects.Recipe:setPaddings(...)
 	return self
 end
 
-function RecipeObjects.Recipe:setChainHead(chainInputCtlg, chainOutputCtlg)
-	self.effUnitInputCtlg = chainInputCtlg
-	self.effUnitOutputCtlg = chainOutputCtlg
+function RecipeObjects.Recipe:setChainHead(otherChainInputCtlg)
+	self.effUnitInputCtlg:inPlaceAdd(otherChainInputCtlg, Ctlg.ALLOW_KEY_CREATION)
+	return self
 end
 ------------------------------------------------------------
 -- Mini class RecipeList (multiple recipes)
@@ -123,9 +123,9 @@ function RecipeObjects.RecipeList:setPaddings(...)
 	return self
 end
 
-function RecipeObjects.RecipeList:setChainHead(chainInputCtlg, chainOutputCtlg)
+function RecipeObjects.RecipeList:setChainHead(otherChainInputCtlg)
 	for _, r in ipairs(self) do
-		r:setChainHead(chainInputCtlg, chainOutputCtlg)
+		r:setChainHead(otherChainInputCtlg)
 	end
 	return self
 end

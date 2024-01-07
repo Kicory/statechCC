@@ -1,6 +1,6 @@
 local Prefix = require("Dict").Prefix
 local I = require("Dict").Item
-local Fluid = require("Dict").Fluid
+local F = require("Dict").Fluid
 local DirectProd = require("Dict").DirectProd
 local Ctlg = require("__Catalouge")
 local Helper = require("__Helpers")
@@ -32,7 +32,9 @@ local _XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX = 1024
 local _XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX = 2048
 
 goalMaker {
-	
+	[I.platinum_tiny_dust] = 28,
+	[F.polytetrafluoroethylene] = 2001,
+	[I.chromium_tiny_dust] = 28,
 }
 
 local function makeAutoGoals(seedGoals, dps, prodGraph)

@@ -201,7 +201,6 @@ do -- Centrifuge
 	m(I.le_mox_fuel_rod_depleted, 1, nil, nil, I.uranium_238_tiny_dust, 48, I.plutonium_tiny_dust, 30, nil, nil, dm(I.le_mox_fuel_rod_depleted) .. breakdown, 32):setAlwaysProc()
 	m(I.le_uranium_fuel_rod_depleted, 1, nil, nil, I.uranium_238_tiny_dust, 48, I.plutonium_tiny_dust, 24, I.uranium_235_tiny_dust, 6, nil, nil, dm(I.le_uranium_fuel_rod_depleted) .. breakdown, 32):setAlwaysProc()
 	m(I.uranium_fuel_rod_depleted, 1, nil, nil, I.uranium_238_tiny_dust, 53, I.plutonium_tiny_dust, 27, nil, nil, dm(I.uranium_fuel_rod_depleted), 32)
-	m(nil, F.platinum_sulfuric_solution, 1000, nil, nil, F.purified_platinum_sulfuric_solution, 1000, nil, dm(F.purified_platinum_sulfuric_solution), 8)
 	m(I.redstone, 10, nil, nil, I.iron_dust, 5, I.ruby_dust, 1, I.quartz_dust, 1, nil, nil, dm(I.redstone) .. breakdown, 8):filterEffOutput(I.ruby_dust):setPriority(Recipe.PRIO_RELUCTANT) -- Redstone Dust is useful...
 	-- m(I.uranium_dust, 9, nil, nil, I.uranium_235_tiny_dust, 1, I.uranium_238_tiny_dust, 80, nil, nil, dm(I.uranium_dust) .. breakdown, 64):setPriority(Recipe.PRIO_RELUCTANT) -- Too much energy
 	m(nil, F.core_slurry, 1000, nil, I.platinum_nugget, 49, I.tungsten_nugget, 23, I.titanium_nugget, 19, I.iridium_nugget, 9, nil, nil, dm(F.core_slurry) .. breakdown, 32):setAlwaysProc()
@@ -293,11 +292,9 @@ do -- Electronizer
 	local dm = Helper.dispNameMaker
 	m(I.bauxite_dust, 10, nil, nil, I.aluminum_dust, 4, I.titanium_tiny_dust, 3, nil, nil, dm(I.aluminum_dust) .. from .. dm(I.bauxite_dust), 32):filterEffOutput(I.aluminum_dust):setPriority(Recipe.PRIO_LOW) -- Main method for aluminum dust
 	m(I.emerald_dust, 23, nil, nil, I.beryllium_dust, 3, I.aluminum_dust, 2, I.silicon_dust, 6, nil, F.oxygen, 3000, nil, dm(I.emerald_dust) .. eleced, 32):filterEffOutput(I.beryllium_dust):setPriority(Recipe.PRIO_RELUCTANT)
-	m(nil, F.chromium_hydrochloric_solution, 1000, nil, I.chromium_tiny_dust, 3, nil, F.hydrogen, 450, F.chlorine, 450, nil, dm(I.chromium_tiny_dust) .. ele, 16):filterEffOutput(I.chromium_tiny_dust)
 	m(nil, F.heavy_water, 3000, nil, nil, F.deuterium, 2000, F.oxygen, 1000, nil, dm(F.heavy_water) .. eleced, 8):filterEffOutput(F.deuterium)
 	m(I.lapis_dust, 18, nil, nil, I.aluminum_dust, 3, I.sodium_dust, 2, I.silicon_dust, 1, nil, nil, dm(I.lapis_dust) .. eleced, 32):setAlwaysProc()
 	m(nil, F.manganese_sulfuric_solution, 1000, nil, I.manganese_tiny_dust, 3, nil, F.sulfuric_acid, 900, nil, dm(I.manganese_tiny_dust) .. ele, 16):filterEffOutput(I.manganese_tiny_dust)
-	m(nil, F.purified_platinum_sulfuric_solution, 1000, nil, I.platinum_tiny_dust, 3, nil, F.sulfuric_acid, 900, nil, dm(I.platinum_tiny_dust) .. ele, 32):filterEffOutput(I.platinum_tiny_dust)
 	m(nil, F.water, 3000, nil, nil, F.hydrogen, 2000, F.oxygen, 1000, nil, dm(F.water) .. eleced, 8):setPriority(Recipe.PRIO_HIGH)
 	m(nil, F.brine, 8000, nil, nil, F.chlorine, 2000, F.hydrogen, 2000, F.sodium_hydroxide, 3000, F.lithium, 1000, nil, dm(F.brine) .. eleced, 32):filterEffOutput(F.chlorine, F.sodium_hydroxide, F.lithium):setPriority(Recipe.PRIO_HIGH) -- Brine is easy to get
 	-- m(nil, F.chloroform, 1000, nil, nil, F.hydrogen, 300, F.chlorine, 600, nil, dm(F.chloroform) .. eleced, 16):setPriority(Recipe.PRIO_RELUCTANT) -- chloroform is scarce resource..
@@ -356,16 +353,12 @@ do -- Chemical Reactor, large chemical reactor
 	-- Deuterium is much more valuable...
 	m(nil, F.hydrogen, 1000, F.chlorine, 1000, nil, nil, F.hydrochloric_acid, 2000, nil, dm(F.hydrochloric_acid), 8)
 	m(I.manganese_crushed_dust, 1, nil, F.sulfuric_acid, 9000, nil, nil, F.manganese_sulfuric_solution, 9000, nil, dm(F.manganese_sulfuric_solution), 8)
-	m(I.raw_platinum, 1, nil, F.sulfuric_acid, 9000, nil, nil, F.platinum_sulfuric_solution, 9000, nil, dm(F.platinum_sulfuric_solution), 8)
 	-- m(I.sodium_dust, 1, nil, F.oxygen, 1000, F.hydrogen, 1000, nil, nil, F.sodium_hydroxide, 2000, nil, dm(F.sodium_hydroxide) .. " from " .. dm(I.sodium_dust), 8)
 	-- Sodium dust is much more valuable
 	m(I.sulfur_dust, 1, nil, F.oxygen, 200, F.water, 200, nil, nil, F.sulfuric_acid, 500, nil, dm(F.sulfuric_acid), 16)
 	m(nil, F.chlorine, 2000, F.methane, 500, nil, nil, F.hydrochloric_acid, 2000, F.chloroform, 500, nil, dm(F.chloroform), 18):filterEffOutput(F.chloroform)
 	m(I.ender_pearl, 1, I.blaze_powder, 1, nil, nil, I.ender_eye, 2, nil, nil, dm(I.ender_eye), 8)
-	m(nil, F.fluorine, 1000, F.hydrogen, 1000, nil, nil, F.hydrofluoric_acid, 2000, nil, dm(F.hydrofluoric_acid), 24)
-	m(nil, F.tetrafluoroethylene, 300, F.oxygen, 1000, nil, nil, F.polytetrafluoroethylene, 400, nil, dm(F.polytetrafluoroethylene), 20)
 	m(I.diamond, 1, nil, F.molten_redstone, 3600, nil, I.synthetic_redstone_crystal, 1, nil, nil, dm(I.synthetic_redstone_crystal), 24)
-	m(nil, F.hydrofluoric_acid, 2000, F.chloroform, 1000, nil, nil, F.hydrochloric_acid, 2500, F.tetrafluoroethylene, 500, nil, dm(F.tetrafluoroethylene), 24):filterEffOutput(F.tetrafluoroethylene)
 	-- m(I.coal_dust, 1, nil, F.acetylene, 1000, nil, nil, F.hydrogen, 2000, nil, dm(F.hydrogen) .. " from " .. dm(I.coal_dust), 12)
 	-- Hydrogen is cheap.
 	m(nil, F.benzene, 750, F.ethylene, 750, F.hydrochloric_acid, 100, nil, nil, F.ethylbenzene, 750, nil, dm(F.ethylbenzene) .. chem, 12):setOpportunistic(F.benzene, F.ethylene):setPriority(Recipe.PRIO_HIGH)
@@ -450,7 +443,6 @@ do -- Blast Furnace recipes (Cupronickel, Kanthal, Tungstensteel)
 	mc(I.kanthal_dust, 1, nil, nil, I.kanthal_hot_ingot, 1, nil, nil, dm(I.kanthal_hot_ingot), 32)
 	mc(I.stainless_steel_dust, 1, nil, nil, I.stainless_steel_hot_ingot, 1, nil, nil, dm(I.stainless_steel_hot_ingot), 32)
 	mc(I.aluminum_dust, 1, nil, nil, I.aluminum_ingot, 1, nil, nil, dm(I.aluminum_ingot) .. bla, 32)
-	mc(I.fluorite_dust, 1, nil, nil, nil, F.fluorine, 1000, nil, dm(F.fluorine), 16)
 	mc(nil, F.methane, 200, nil, nil, F.acetylene, 200, nil, dm(F.acetylene) .. bla, 32):setOpportunistic(F.methane):setPriority(Recipe.PRIO_HIGH)
 	
 	mk(I.nether_star, 1, nil, nil, nil, F.molten_nether_star, 500, nil, dm(F.molten_nether_star), 128):setOpportunistic():setPriority(Recipe.PRIO_HIGH)
@@ -664,12 +656,63 @@ do -- Assembler Recipes
 end
 -------------------------------------------------
 do -- Process Chains
-	-- 
+	local chemHead = Recipes.makeSingleChemicalReactorRecipe
+	local blastCuprRaw = Recipes.makeSingleRecipeMaker(MultiblockMachine.blastFurnaceCupr, true, true, true, true)
+	local blastKantRaw = Recipes.makeSingleRecipeMaker(MultiblockMachine.blastFurnaceKant, true, true, true, true)
+	local blastTungRaw = Recipes.makeSingleRecipeMaker(MultiblockMachine.blastFurnaceTung, true, true, true, true)
+	local blastKantHead = function(...)
+		return RecipeList:new {
+			blastKantRaw(...), 
+			blastTungRaw(...)
+		}
+	end
+	local blastCuprHead = function(...)
+		return RecipeList:new {
+			blastCuprRaw(...),
+			blastKantRaw(...),
+			blastTungRaw(...)
+		}
+	end
+	local chemChain = Recipes.makeChainRecipeMaker(Machine.chemical_reactor, true, true)
+	local chemBigChain = Recipes.makeChainRecipeMaker(MultiblockMachine.chemicalReactorLarge, true, true)
+	local elecChain = Recipes.makeChainRecipeMaker(Machine.electrolyzer, true, true)
+	local centChain = Recipes.makeChainRecipeMaker(Machine.centrifuge, true, true)
+
+	do -- Chromium tiny dust production
+		local name = "Chromium Chain"
+		chemHead(I.chromium_crushed_dust, 1, nil, F.hydrochloric_acid, 9000, nil, I.chromium_tiny_dust, 3 * 9, nil, F.hydrogen, 450 * 9, F.chlorine, 450 * 9, nil, name, 8):setChainHead(
+			Ctlg:new {}
+		):filterEffOutput(I.chromium_tiny_dust)
+		elecChain(nil, F.chromium_hydrochloric_solution, 1000, nil, name .. ": 1", 16)
+	end
+	do -- Platinum tiny dust production
+		local name = "Platinum Chain"
+		chemHead(I.raw_platinum, 1, nil, F.sulfuric_acid, 9000, nil, I.platinum_tiny_dust, 3 * 9, nil, F.sulfuric_acid, 900 * 9, nil, name, 8):setChainHead(
+			Ctlg:new {}
+		):filterEffOutput(I.platinum_tiny_dust)
+		centChain(nil, F.platinum_sulfuric_solution, 1000, nil, name .. ": 1", 8)
+		elecChain(nil, F.purified_platinum_sulfuric_solution, 1000, nil, name .. ": 2", 32)
+	end
+	do -- polytetrafluoroethylene production
+		local name = "Polything Chain"
+		blastCuprHead(I.fluorite_dust, 3, nil, nil, nil, F.hydrochloric_acid, 7500, F.polytetrafluoroethylene, 2000, nil, name, 16):setChainHead(
+			Ctlg:new {
+				[F.hydrogen] = 3000,
+				[F.chloroform] = 3000,
+				[F.oxygen] = 5000,
+			}
+		):filterEffOutput(F.polytetrafluoroethylene)
+		chemBigChain(nil, F.fluorine, 1000 * 4, F.hydrogen, 1000 * 4, nil, name .. ": 1 Large", 48)
+		chemChain(nil, F.fluorine, 1000, F.hydrogen, 1000, nil, name .. ": 1", 24)
+		chemBigChain(nil, F.hydrofluoric_acid, 2000 * 4, F.chloroform, 1000 * 4, nil, name .. ": 2 Large", 48)
+		chemChain(nil, F.hydrofluoric_acid, 2000, F.chloroform, 1000, nil, name .. ": 2", 24)
+		chemBigChain(nil, F.tetrafluoroethylene, 300 * 4, F.oxygen, 1000 * 4, nil, name .. ": 3", 48)
+		chemChain(nil, F.tetrafluoroethylene, 300, F.oxygen, 1000, nil, name .. ": 3", 24)
+	end
 end
 -------------------------------------------------
 do -- Test Recipes
 	local m = Recipes.makeSingleRecipeMaker(CustomMachine.trashCan, true, true, false, false)
-	m(nil, F.water, 1000, nil, "eme", 0):setPaddings(F.water, 2000):setAlwaysProc()
 	m(I.emerald_tiny_dust, 16, nil, nil, "eme", 0):setPaddings(I.emerald_tiny_dust, 64):setAlwaysProc()
 end
 -------------------------------------------------

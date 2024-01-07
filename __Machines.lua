@@ -277,11 +277,12 @@ local function markMachine(machineName, info, req, states)
 end
 
 local function makeCraftSchedule(req, states)
-	-- Other recipe already fullfilled the requirements of production
-	local recipeOutput = req.recipe.unitOutput
-	local alreadyScheduledCtlg = states.expectedOutputCtlg
-	local globalRequiredFullfilled = alreadyScheduledCtlg / Helper.IO2Catalogue(recipeOutput)
-	req.required = math.max(req.required - globalRequiredFullfilled, 0)
+	if not req.recipe.alwaysProc then
+		-- Other recipe already fullfilled the requirements of production
+		local recipeOutput = req.recipe.unitOutput
+		local globalRequiredFullfilled = states.expectedOutputCtlg / Helper.IO2Catalogue(recipeOutput)
+		req.required = math.max(req.required - globalRequiredFullfilled, 0)
+	end
 
 	local mt = req.recipe.machineType
 	for _, mn in ipairs(machineNames[mt] or {}) do
