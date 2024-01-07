@@ -290,7 +290,15 @@ local function makeCraftSchedule(req, states)
 	end
 end
 --------------------------------------------
-local function prepareFactoryStatus()
+function M.init()
+	refreshMachines()
+end
+--------------------------------------------
+function M.updateFactory(fromAE)
+	local harvestedCtlg = Ctlg:new()
+	local itemPuller = fromAE.pullItem
+	local fluidPuller = fromAE.pullFluid
+
 	-- Make large info [storageInfo, tankInfo, craftingInfo] table for every machine.
 	-- All parallel-consuming tasks will be here.
 	local function getStorageInfo(info)
@@ -326,33 +334,54 @@ local function prepareFactoryStatus()
 			return {}
 		end
 	end
-	local function paraCost(info, totalPullCnts)
-		local ret = 0
-		if info.singleBlockMachineName then
-			if info.hasItem then ret = ret + 1 end
-			if info.hasFluid then ret = ret + 1 end
-			ret = ret + 1
-		else
-			if info.hasItem then ret = ret + 1 end
-			if info.hasFluid then ret = ret + #info.fluidInputs end
-			ret = ret + 1
+	local function harvestToBufferSingleMachine(machineName, info, itemPullCnt, fluidPullCnt)
+		os.sleep(0.01) -- Wait for factoryStatus fill up
+		local si = factoryStatus[machineName].storageInfo
+		local ti = factoryStatus[machineName].tankInfo
+		
+		local function harvestItem()
+			local sLen = #si
+			local pullers = {}
+			for idx = sLen, math.max(1, sLen - itemPullCnt + 1), -1 do
+				local singleStorage = si[idx]
+				pullers[#pullers + 1] = function() 
+					local harvestedAmt = itemPuller(machineName, singleStorage.name, singleStorage.count)
+					if harvestedAmt ~= 0 then
+						harvestedCtlg[singleStorage.name] = (harvestedCtlg[singleStorage.name] or 0) + harvestedAmt
+						-- Update storageInfo
+						si[idx] = nil
+					end
+				end
+			end
+			parallel.waitForAll(table.unpack(pullers))
 		end
-		return ret
-	end
-	local function harvestToBufferSingleMachine(machineName, info, itemPuller, itemPullCnt, fluidPuller, fluidPullCnt)
-		local function pullEveryItem(storageName)
-			TH.doMany(function() itemPuller(storageName) end, itemPullCnt)
+		local function harvestFluid()
+			local pullers = {}
+			for idx = #ti, #ti - fluidPullCnt + 1, -1 do
+				local singleTank = ti[idx]
+				if singleTank.amount ~= 0 then
+					pullers[#pullers + 1] = function()
+						local harvestedAmt = fluidPuller(machineName, singleTank.amount, singleTank.name)
+						if harvestedAmt ~= 0 then
+							harvestedCtlg[singleTank.name] = (harvestedCtlg[singleTank.name] or 0) + harvestedAmt
+							-- Update tankInfo
+							singleTank.amount = 0
+							singleTank.name = Fluid.empty
+						end
+					end
+				end
+			end
+			parallel.waitForAll(table.unpack(pullers))
 		end
-		local function pullEveryFluid(tankName)
-			TH.doMany(function() fluidPuller(tankName) end, fluidPullCnt)
-		end
+
 		local bufferPullers = {}
+
 		if info.singleBlockMachineName then
 			if info.hasItem then
-				bufferPullers[#bufferPullers + 1] = function() pullEveryItem(machineName) end
+				bufferPullers[#bufferPullers + 1] = harvestItem
 			end
 			if info.hasFluid then
-				bufferPullers[#bufferPullers + 1] = function() pullEveryFluid(machineName) end
+				bufferPullers[#bufferPullers + 1] = harvestFluid
 			end
 		else
 			-- No pull from multiblock machine (input and output is separated in multiblock machines...)
@@ -362,14 +391,13 @@ local function prepareFactoryStatus()
 
 	local statusGetters = {}
 	local accParaCost = 0
-	local itemPuller = St.bufferAE.pullItem
-	local fluidPuller = St.bufferAE.pullFluid
+
 	for mt, machines in pairs(machineList) do
 		local itemPullCnt = MachineProperty.OutputItemSlotCount[mt] or 0
 		local fluidPullCnt = MachineProperty.OutputFluidSlotCount[mt] or 0
 
 		for mn, info in pairs(machines) do
-			local thisParaCost = paraCost(info, itemPullCnt + fluidPullCnt)
+			local thisParaCost = itemPullCnt + fluidPullCnt + 3
 			if (accParaCost + thisParaCost) > paraCostLimit then
 				parallel.waitForAll(table.unpack(statusGetters))
 				statusGetters = {}
@@ -379,9 +407,9 @@ local function prepareFactoryStatus()
 			factoryStatus[mn].type = mt
 			statusGetters[#statusGetters + 1] = function()
 				parallel.waitForAll(
-					function() harvestToBufferSingleMachine(mn, info, itemPuller, itemPullCnt, fluidPuller, fluidPullCnt) end,
 					function() factoryStatus[mn].storageInfo = getStorageInfo(info) end,
 					function() factoryStatus[mn].tankInfo = getTankInfo(info) end,
+					function() harvestToBufferSingleMachine(mn, info, itemPullCnt, fluidPullCnt) end,
 					function() factoryStatus[mn].craftingInfo = getMachineCraftingInfo(info) end
 				)
 			end
@@ -389,10 +417,7 @@ local function prepareFactoryStatus()
 		end
 	end
 	parallel.waitForAll(table.unpack(statusGetters))
-end
---------------------------------------------
-function M.init()
-	refreshMachines()
+	return harvestedCtlg
 end
 --------------------------------------------
 function M.makeFactoryCraftSchedule(craftReqs, afterFeedCtlg, goalsCtlg)
@@ -402,9 +427,7 @@ function M.makeFactoryCraftSchedule(craftReqs, afterFeedCtlg, goalsCtlg)
 	local expectedOutputCtlg = Ctlg:new()
 	local lackingStatus = {}
 	local machineLackingStatus = {}
-	
-	prepareFactoryStatus()	-- Consumes paraCount
-	
+
 	local states = {
 		resultSchedule = resultSchedule,
 		afterFeedCtlg = afterFeedCtlg,
@@ -425,91 +448,6 @@ function M.makeFactoryCraftSchedule(craftReqs, afterFeedCtlg, goalsCtlg)
 	return resultSchedule, lackingStatus, machineLackingStatus
 end
 ----------------------------------------------
---- Do one 'pullFluid' and one 'pullItem' on each machine, including all multiblock output hatches
---- This is for pulling leftover products 'slowly', as scheduler only 'pulls' when the machine has thing to craft.
---- Obeys 'paraCostLimit'.
-function M.harvestToBufferSlow()
-	local function paraCost(info)
-		local ret = 0
-		if info.singleBlockMachineName then
-			if info.hasItem then ret = ret + 1 end
-			if info.hasFluid then ret = ret + 1 end
-		end
-		return ret
-	end
-	
-	local bufferPullers = {}
-	local accParaCost = 0
-	local pullItem = St.bufferAE.pullItem
-	local pullFluid = St.bufferAE.pullFluid
-	for mt, ml in pairs(machineList) do
-		for mn, info in pairs(ml) do
-			local thisParaCost = paraCost(info)
-			if (accParaCost + thisParaCost) > paraCostLimit then
-				parallel.waitForAll(table.unpack(bufferPullers))
-				bufferPullers = {}
-				accParaCost = 0
-			end
-
-			if info.singleBlockMachineName then
-				if info.hasItem then
-					bufferPullers[#bufferPullers + 1] = function() pullItem(mn) end
-				end
-				if info.hasFluid then
-					bufferPullers[#bufferPullers + 1] = function() pullFluid(mn) end
-				end
-			end
-
-			accParaCost = accParaCost + thisParaCost
-		end
-	end
-	parallel.waitForAll(table.unpack(bufferPullers))
-end
-
---- Send buffer contents to main AE system. Not obeys paraCostLimit.
----@param bufferAE table
----@param bufferStorages table List of item storages connected to bufferAE network
----@param bufferTanks table list of fluid storages connected to bufferAE network
----@param mainAE table Main AE network
----@return table Harvested materials catalogue
-function M.harvestFromBuffer(bufferAE, bufferStorages, bufferTanks, mainAE)
-	local harvestedCtlg = Ctlg:new()
-
-	local harvestedItems
-	local harvestedTanks
-	harvestedItems, harvestedTanks = table.unpack(TH.paraDoAll(bufferAE.items, bufferAE.tanks))
-
-	for _, item in ipairs(harvestedItems) do
-		harvestedCtlg[item.technicalName] = item.count
-	end
-	for _, tank in ipairs(harvestedTanks) do
-		harvestedCtlg[tank.name] = tank.amount
-	end
-	
-	local pullItem = mainAE.pullItem
-	local function pullEveryItem(storageName)
-		-- Configurable Chest / normal single Chest slot number = 27
-		TH.doMany(function() pullItem(storageName) end, 27)
-	end
-	local pullFluid = mainAE.pullFluid
-	local function pullEveryFluid(tankName)
-		-- Configurable Tank slot number: 9
-		TH.doMany(function() pullFluid(tankName) end, 9)
-	end
-	local mainPullers = {}
-
-	for _, storageName in ipairs(bufferStorages) do
-		mainPullers[#mainPullers + 1] = function() pullEveryItem(storageName) end
-	end
-	
-	for _, tankName in ipairs(bufferTanks) do
-		mainPullers[#mainPullers + 1] = function() pullEveryFluid(tankName) end
-	end
-
-	parallel.waitForAll(table.unpack(mainPullers))
-	return harvestedCtlg
-end
-
 --- Feed entire factory items and fluids for craft. Obeys paraCostLimit
 ---@param scd table Schedule
 ---@param fromAE table Source of item/fluids

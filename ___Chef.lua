@@ -17,13 +17,15 @@ function Chef.init()
 	M.init()
 	St.init()
 	Goals.init(DirectProd, Recipes.productionGraph)
-	write("Where is Owner? > ")
-	codeInputSide = read()
+	local owner = peripheral.find("computer")
+	if owner then
+		codeInputSide = peripheral.getName(owner)
+	end
 	moni = peripheral.find("monitor")
 end
 
 function Chef.step(prevLackingStatus, prevMachineLackingStatus)
-	St.refreshCatalogue()
+	St.refreshCatalogue() -- Consumes ticks
 	
 	if moni then
 		St.printStatusToMonitor(Goals.DerivedGoalsCtlg, prevLackingStatus, prevMachineLackingStatus, moni)
@@ -31,13 +33,10 @@ function Chef.step(prevLackingStatus, prevMachineLackingStatus)
 
 	local craftRequirements = St.getRequirements(Recipes, Goals.DerivedGoalsCtlg)
 
-	M.harvestToBufferSlow()
+	local harvestedCtlg = M.updateFactory(St.mainAE) -- consumes ticks
+
 	local factoryScd, lackingStatus, machineLackingStatus = M.makeFactoryCraftSchedule(craftRequirements, St.getCatalogueCopy(), Goals.DerivedGoalsCtlg)
 
-	os.sleep(0.01)	-- 1 tick for AE system to prepare.
-
-	local harvestedCtlg = M.harvestFromBuffer(St.bufferAE, St.BufferStorages, St.BufferTanks, St.mainAE)
-	
 	local fedCtlg, expectedCtlg = M.feedFactory(factoryScd, St.mainAE)
 	
 	St.applyExpectedCatalogue(expectedCtlg)
@@ -47,16 +46,19 @@ function Chef.step(prevLackingStatus, prevMachineLackingStatus)
 end
 
 function Chef.maintenance()
+	if not codeInputSide then
+		return
+	end
 	local actionCode = rs.getAnalogInput(codeInputSide)
 	while actionCode ~= 0 do
 		if actionCode == 1 then
-			os.sleep(0.05)
-			M.harvestToBufferSlow()
-			os.sleep(0.05)
+			os.sleep(0.1)
+			local harvested = M.updateFactory(St.mainAE)
+			os.sleep(0.1)
 			-- Pulling back outputs from factory should not stop
-			St.applyHarvestedCatalogue(M.harvestFromBuffer(St.bufferAE, St.BufferStorages, St.BufferTanks, St.mainAE))
+			St.applyHarvestedCatalogue(harvested)
 		elseif actionCode == 2 then
-			os.sleep(0.05)
+			os.sleep(0.1)
 		elseif actionCode == 3 then
 			error("Chef halted by Owner!")
 		end
@@ -70,8 +72,6 @@ print("Initializing...")
 local cur = os.clock()
 Chef.init()
 print("Initializing took " .. Helper.tickFrom(cur) .. " ticks \n")
-
--- error("OK")
 
 local lackingStatus = {}
 local machineLackingStatus = {}

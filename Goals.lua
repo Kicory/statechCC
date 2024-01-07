@@ -32,9 +32,6 @@ local _XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX = 1024
 local _XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX = 2048
 
 goalMaker {
-	[I.platinum_tiny_dust] = 28,
-	[F.polytetrafluoroethylene] = 2001,
-	[I.chromium_tiny_dust] = 28,
 }
 
 local function makeAutoGoals(seedGoals, dps, prodGraph)

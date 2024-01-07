@@ -6,10 +6,7 @@ local Ctlg = require("__Catalouge")
 local Recipes = require("Recipes")
 
 local St = {
-	bufferAE = nil,
 	mainAE = nil,
-	BufferStorages = nil,
-	BufferTanks = nil,
 }
 
 local emptyCtlg = nil
@@ -19,10 +16,7 @@ local catalogue = nil
 local craftingCtlg = Ctlg:new()
 
 local function findStorageSystems()
-	St.bufferAE = peripheral.wrap(StorageSystems.buffer)
 	St.mainAE = peripheral.wrap(StorageSystems.main)
-	St.BufferStorages = StorageSystems.BufferStorages
-	St.BufferTanks = StorageSystems.BufferTanks
 end
 -----------------------------------
 function St.init()
