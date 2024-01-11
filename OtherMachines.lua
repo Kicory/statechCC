@@ -1,5 +1,6 @@
 local MM = require("Dict").MultiblockMachine
 local OM = require("Dict").CustomMachine
+local F = require("Dict").Fluid
 
 local OtherMachines = {}
 

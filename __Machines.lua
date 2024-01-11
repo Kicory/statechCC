@@ -84,11 +84,9 @@ local function refreshMachines()
 		machineList[mt] = {}
 		machineNames[mt] = {}
 		for mn, info in pairs(tl) do
-			if peripheral.isPresent(mn) or string.find(mn, "trash_can") then
-				info.wrapped = peripheral.wrap(mn)
-				machineList[mt][mn] = info
-				table.insert(machineNames[mt], mn)
-			end
+			-- Do not need wrapped object (not mi crafter)
+			machineList[mt][mn] = info
+			table.insert(machineNames[mt], mn)
 		end
 	end
 

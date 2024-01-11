@@ -713,6 +713,7 @@ end
 -------------------------------------------------
 do -- Test Recipes
 	local m = Recipes.makeSingleRecipeMaker(CustomMachine.trashCan, true, true, false, false)
+	m(I.emerald_tiny_dust, 16, nil, nil, "eme", 0):setPaddings(I.emerald_tiny_dust, 64):setAlwaysProc()
 end
 -------------------------------------------------
 local function recipeSort(a, b)

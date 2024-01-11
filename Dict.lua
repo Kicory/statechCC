@@ -1266,6 +1266,7 @@ Dict.MultiblockMachine = {
 
 Dict.CustomMachine = {
 	trashCan = I.trash_can,
+	advLargeBoiler = I.advanced_large_steam_boiler,
 }
 
 Dict.PpType = {
