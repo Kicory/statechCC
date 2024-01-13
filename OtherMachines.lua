@@ -67,6 +67,24 @@ OtherMachines.CustomMachines = {
 		["trash_can_7"] = trashCanInfo,
 		["trash_can_8"] = trashCanInfo,
 		["trash_can_9"] = trashCanInfo,
+	},
+	[OM.advLargeBoiler] = {
+		["Boiler_1"] = {
+			hasFluid = true,
+			fluidInputs = {
+				"modern_industrialization:bronze_fluid_input_hatch_2",
+			},
+			hasItem = true,
+			itemInput = "modern_industrialization:bronze_item_input_hatch_3",
+		},
+	},
+	[OM.boilerWaterHatch] = {
+		["Boiler_1_water"] = {
+			hasFluid = true,
+			fluidInputs = {
+				"modern_industrialization:bronze_fluid_input_hatch_3"
+			},
+		}
 	}
 }
 

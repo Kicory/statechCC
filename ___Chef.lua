@@ -6,8 +6,6 @@ local Helper = require("__Helpers")
 local DirectProd = require("Dict").DirectProd
 local Ctlg = require("__Catalouge")
 
-local SeedGoalsCtlg = GoalMng.SeedGoalsCtlg
-
 -- Main program
 local Chef = {}
 local moni

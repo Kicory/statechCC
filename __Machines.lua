@@ -128,43 +128,56 @@ local function isEmptyMachine(storageInfo, tankInfo)
 	return isEmptyStorage(storageInfo) and isEmptyTank(tankInfo)
 end
 --------------------------------------------
-local function itemFitsCount(storageInfo, itemID, amt)
+local function itemFitsCount(storageInfo, itemID, amt, maxCount)
 	if storageInfo and isEmptyStorage(storageInfo) then
 		-- emtpy
-		local maxCount = OddMaxCount[itemID] or 64
 		return math.floor(maxCount / amt)
 	end
 	for _, slot in pairs(storageInfo) do
 		if itemID == slot.name then
-			return math.floor((slot.maxCount - slot.count) / amt)
+			return math.floor((maxCount - slot.count) / amt)
 		end
 	end
 	return 0
 end
 
-local function fluidFitsTankCount(tankInfo, fluidID, amt)
+local function fluidFitsTankCount(tankInfo, fluidID, amt, maxAmt)
 	if tankInfo and isEmptyTank(tankInfo) then
-		return math.floor(tankInfo[1].capacity / amt)
+		local maxCap = math.min(tankInfo[1].capacity, maxAmt)
+		return math.floor(maxCap / amt)
 	end
 	for _, tank in pairs(tankInfo) do
 		if fluidID == tank.name then
-			return math.floor((tank.capacity - tank.amount) / amt)
+			local maxCap = math.min(tank.capacity, maxAmt)
+			return math.floor((maxCap - tank.amount) / amt)
 		end
 	end
 	return 0
 end
 
-local function inputFitCount(input, storageInfo, tankInfo)
+local function inputFitCount(recipe, storageInfo, tankInfo)
 	local fitCounts = nil
+	local input = recipe.unitInput
 
-	for itemID, amt in pairs(input.item or {}) do
-		local thisFit = itemFitsCount(storageInfo, itemID, amt)
-		fitCounts = math.min(fitCounts or thisFit, thisFit)
+	if input.item then
+		for itemID, amt in pairs(input.item) do
+			local maxCount = recipe.maxCount[itemID] or OddMaxCount[itemID] or 64
+			local thisFit = itemFitsCount(storageInfo, itemID, amt, maxCount)
+			fitCounts = math.min(fitCounts or thisFit, thisFit)
+		end
+	elseif not isEmptyStorage(storageInfo) then
+		fitCounts = 0
 	end
-	for fluidID, amt in pairs(input.fluid or {}) do
-		local thisFit = fluidFitsTankCount(tankInfo, fluidID, amt)
-		fitCounts = math.min(fitCounts or thisFit, thisFit)
+	if input.fluid then
+		for fluidID, amt in pairs(input.fluid) do
+			local maxAmt = recipe.maxCount[fluidID] or math.huge
+			local thisFit = fluidFitsTankCount(tankInfo, fluidID, amt, maxAmt)
+			fitCounts = math.min(fitCounts or thisFit, thisFit)
+		end
+	elseif not isEmptyTank(tankInfo) then
+		fitCounts = 0
 	end
+
 	return fitCounts or 0
 end
 --------------------------------------------
@@ -181,7 +194,7 @@ local function getMachineReadiness(machineName, recipe)
 	end
 
 	local empty = isEmptyMachine(storageInfo, tankInfo)
-	local fitUnits = inputFitCount(recipe.unitInput, storageInfo, tankInfo)
+	local fitUnits = inputFitCount(recipe, storageInfo, tankInfo)
 	local minPowOK
 	if craftingInfo.maxRecipeCost ~= nil then
 		minPowOK = craftingInfo.maxRecipeCost >= recipe.minimumPower
@@ -212,7 +225,7 @@ local function markMachine(machineName, info, req, states)
 	req.expInput = req.expInput or 1
 	if not minPowOk then return
 	elseif isEmpty then countTry = maxTryWhenEmpty
-	elseif fitCount == 0 then return
+	elseif fitCount <= 0 then return
 	else countTry = math.max(math.floor(req.expInput), math.ceil(craftingSpeed)) end
 	countTry = math.min(countTry, req.required, fitCount)
 
@@ -339,6 +352,7 @@ function M.updateFactory(fromAE)
 		local ti = factoryStatus[machineName].tankInfo
 		
 		local function harvestItem()
+			assert(si ~= nil, machineName)
 			local sLen = #si
 			local pullers = {}
 			for idx = sLen, math.max(1, sLen - itemPullCnt + 1), -1 do
@@ -422,7 +436,7 @@ end
 function M.makeFactoryCraftSchedule(craftReqs, afterFeedCtlg, goalsCtlg)
 	assert(afterFeedCtlg ~= nil)
 	
-	local resultSchedule = Ctlg:new()
+	local resultSchedule = {}
 	local expectedOutputCtlg = Ctlg:new()
 	local lackingStatus = {}
 	local machineLackingStatus = {}

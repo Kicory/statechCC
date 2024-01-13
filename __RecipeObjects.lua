@@ -63,6 +63,15 @@ function RecipeObjects.Recipe:setPaddings(...)
 	return self
 end
 
+function RecipeObjects.Recipe:setMaxCount(...)
+	local ps = table.pack(...)
+	for idx = 1, #ps, 2 do
+		assert(type(ps[idx]) == "string", debug.traceback())
+		self.maxCount[ps[idx]] = ps[idx + 1]
+	end
+	return self
+end
+
 function RecipeObjects.Recipe:setChainHead(otherChainInputCtlg)
 	self.effUnitInputCtlg:inPlaceAdd(otherChainInputCtlg, Ctlg.ALLOW_KEY_CREATION)
 	return self
@@ -119,6 +128,13 @@ end
 function RecipeObjects.RecipeList:setPaddings(...)
 	for _, r in ipairs(self) do
 		r:setPaddings(...)
+	end
+	return self
+end
+
+function RecipeObjects.RecipeList:setMaxCount(...)
+	for _, r in ipairs(self) do
+		r:setMaxCount(...)
 	end
 	return self
 end

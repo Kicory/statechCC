@@ -28,7 +28,6 @@ do -- Make other compressor recipes
 	local m = Recipes.makeSingleRecipeMaker(Machine.electric_compressor, true, false, true, false)
 	local dm = Helper.dispNameMaker
 	m(I.carbon_dust, 1, nil, I.carbon_plate, 1, nil, nil, 2)
-	m(I.lignite_coal_dust, 1, nil, I.lignite_coal, 1, nil, nil, 2):setAlwaysProc()
 	m(I.iridium_plate, 1, nil, I.iridium_curved_plate, 1, nil, nil, 2)
 	m(I.lapis_lazuli, 1, nil, I.lapis_plate, 1, nil, nil, 2)
 	m(I.diamond, 1, nil, I.diamond_plate, 1, nil, nil, 48)
@@ -709,6 +708,30 @@ do -- Process Chains
 		chemBigChain(nil, F.tetrafluoroethylene, 300 * 4, F.oxygen, 1000 * 4, nil, name .. ": 3", 48)
 		chemChain(nil, F.tetrafluoroethylene, 300, F.oxygen, 1000, nil, name .. ": 3", 24)
 	end
+end
+-------------------------------------------------
+do -- Boiler fuel feeder
+	local name = "advLarge"
+	local m = Recipes.makeSingleRecipeMaker(CustomMachine.advLargeBoiler, true, true, false, false)
+	m(I.lignite_coal_dust, 1, nil, nil, name .. " ligCoal", 0):setMaxCount(I.lignite_coal_dust, 5):setAlwaysProc()
+	m(I.charcoal, 1, nil, nil, name .. " charcoal", 0):setMaxCount(I.charcoal, 5):setAlwaysProc()
+	m(nil, F.creosote, 1000, nil, name .. " creosote", 0):setMaxCount(F.creosote, 2000):setAlwaysProc()
+	m(nil, F.boosted_diesel, 200, nil, name .. " Boosted Diesel", 0):setMaxCount(F.boosted_diesel, 400):setAlwaysProc()
+end
+do -- Boiler water/HP water feeder
+	local name = "advLarge"
+	local m = Recipes.makeSingleRecipeMaker(CustomMachine.boilerWaterHatch, false, true, false, false)
+	m(F.water, 2000, nil, name .. " water", 0):setAlwaysProc()
+end
+-------------------------------------------------
+do -- Turbine feeder
+	local mlv = Recipes.makeSingleRecipeMaker(Machine.lv_steam_turbine, false, true, false, false)
+	local mmv = Recipes.makeSingleRecipeMaker(Machine.mv_steam_turbine, false, true, false, false)
+	local mhv = Recipes.makeSingleRecipeMaker(Machine.hv_steam_turbine, false, true, false, false)
+
+	mlv(F.steam, 8000, nil, "lv steem feed", 0):setAlwaysProc()
+	mmv(F.steam, 16000, nil, "mv steem feed", 0):setAlwaysProc()
+	mhv(F.steam, 16000, nil, "hv steem feed", 0):setAlwaysProc()
 end
 -------------------------------------------------
 do -- Test Recipes

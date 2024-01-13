@@ -1229,6 +1229,10 @@ Dict.Machine = {
 	alloy_smelter = I.alloy_smelter,
 	laser_engraver = I.laser_engraver,
 	distillery = I.distillery,
+
+	lv_steam_turbine = I.lv_steam_turbine,
+	mv_steam_turbine = I.mv_steam_turbine,
+	hv_steam_turbine = I.hv_steam_turbine,
 }
 
 Dict.OutputHatchList = {
@@ -1267,6 +1271,10 @@ Dict.MultiblockMachine = {
 Dict.CustomMachine = {
 	trashCan = I.trash_can,
 	advLargeBoiler = I.advanced_large_steam_boiler,
+	boilerWaterHatch = "boiler_water_hatch",
+	boilerHPWaterHatch = "boiler_high_pressure_water_hatch",
+	turbineLarge = I.large_steam_turbine,
+	turbinePlasma = I.plasma_turbine,
 }
 
 Dict.PpType = {

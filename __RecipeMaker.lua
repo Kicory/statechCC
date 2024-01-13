@@ -72,6 +72,8 @@ function Recipes.add(specs)
 		alwaysProc = false,
 		-- Not used for goal maker calculation (only craft when resource is available)
 		opportunistic = false,
+		-- How much specific material allowed to stack in the machine.
+		maxCount = {},
 		paddingCtlg = Ctlg:new(),
 	}
 	Recipes[order] = r
