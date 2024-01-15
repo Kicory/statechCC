@@ -1,5 +1,5 @@
 local StorageSystems = {
-	main = "ae2:dense_energy_cell_0",
+	main = "ae2:energy_cell_0",
 }
 
 return StorageSystems

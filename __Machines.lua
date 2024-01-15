@@ -18,8 +18,10 @@ local M = {}
 local machineList = nil
 local machineNames = nil
 local factoryStatus = nil
+local runningRecipe = nil
+local waitingRecipe = nil
 local paraCostLimit = 250
-local maxTryWhenEmpty = 2
+local maxTryWhenEmpty = 1
 --------------------------------------------
 local function refreshMachines()
 	local singleBlockMachineTypes = {}
@@ -33,7 +35,8 @@ local function refreshMachines()
 
 	machineList = {}
 	machineNames = {}
-	factoryStatus = {}
+	runningRecipe = {}
+	waitingRecipe = {}
 
 	local function registerMachine(machineType, machineName, machineWrapped)
 		local info = {}
@@ -87,18 +90,6 @@ local function refreshMachines()
 			-- Do not need wrapped object (not mi crafter)
 			machineList[mt][mn] = info
 			table.insert(machineNames[mt], mn)
-		end
-	end
-
-	-- Create empty factoryStatus
-	for mt, tl in pairs(machineList) do
-		for mn, info in pairs(tl) do
-			factoryStatus[mn] = {
-				type = mt,
-				storageInfo = nil,
-				tankInfo = nil,
-				craftingInfo = nil,
-			}
 		end
 	end
 end
@@ -159,23 +150,28 @@ local function inputFitCount(recipe, storageInfo, tankInfo)
 	local fitCounts = nil
 	local input = recipe.unitInput
 
-	if input.item then
-		for itemID, amt in pairs(input.item) do
-			local maxCount = recipe.maxCount[itemID] or OddMaxCount[itemID] or 64
-			local thisFit = itemFitsCount(storageInfo, itemID, amt, maxCount)
-			fitCounts = math.min(fitCounts or thisFit, thisFit)
-		end
-	elseif not isEmptyStorage(storageInfo) then
-		fitCounts = 0
+	for itemID, amt in pairs(input.item or {}) do
+		local maxCount = recipe.maxCount[itemID] or OddMaxCount[itemID] or 64
+		local thisFit = itemFitsCount(storageInfo, itemID, amt, maxCount)
+		fitCounts = math.min(fitCounts or thisFit, thisFit)
 	end
-	if input.fluid then
-		for fluidID, amt in pairs(input.fluid) do
-			local maxAmt = recipe.maxCount[fluidID] or math.huge
-			local thisFit = fluidFitsTankCount(tankInfo, fluidID, amt, maxAmt)
-			fitCounts = math.min(fitCounts or thisFit, thisFit)
+	for _, slot in pairs(storageInfo or {}) do
+		if not (input.item and input.item[slot.name]) then
+			fitCounts = 0
 		end
-	elseif not isEmptyTank(tankInfo) then
-		fitCounts = 0
+	end
+
+	for fluidID, amt in pairs(input.fluid or {}) do
+		local maxAmt = recipe.maxCount[fluidID] or math.huge
+		local thisFit = fluidFitsTankCount(tankInfo, fluidID, amt, maxAmt)
+		fitCounts = math.min(fitCounts or thisFit, thisFit)
+	end
+	for _, tank in pairs(tankInfo or {}) do
+		if tank.name ~= Fluid.empty then
+			if not (input.fluid and input.fluid[tank.name]) then
+				fitCounts = 0
+			end
+		end
 	end
 
 	return fitCounts or 0
@@ -308,6 +304,7 @@ end
 --------------------------------------------
 function M.updateFactory(fromAE)
 	local harvestedCtlg = Ctlg:new()
+	factoryStatus = {}
 	local itemPuller = fromAE.pullItem
 	local fluidPuller = fromAE.pullFluid
 
@@ -347,7 +344,7 @@ function M.updateFactory(fromAE)
 		end
 	end
 	local function harvestToBufferSingleMachine(machineName, info, itemPullCnt, fluidPullCnt)
-		os.sleep(0.01) -- Wait for factoryStatus fill up
+		os.sleep(0.01) -- Wait for filling up factoryStatus
 		local si = factoryStatus[machineName].storageInfo
 		local ti = factoryStatus[machineName].tankInfo
 		
@@ -357,25 +354,34 @@ function M.updateFactory(fromAE)
 			local pullers = {}
 			for idx = sLen, math.max(1, sLen - itemPullCnt + 1), -1 do
 				local singleStorage = si[idx]
-				pullers[#pullers + 1] = function() 
+				pullers[#pullers + 1] = function()
+					if next(singleStorage) == nil then
+						table.remove(si, idx)
+						return
+					end
 					local harvestedAmt = itemPuller(machineName, singleStorage.name, singleStorage.count)
-					if harvestedAmt ~= 0 then
+					assert(harvestedAmt == 0 or harvestedAmt == singleStorage.count, Helper.serializeTable(singleStorage) .. harvestedAmt)
+					if harvestedAmt == singleStorage.count then
 						harvestedCtlg[singleStorage.name] = (harvestedCtlg[singleStorage.name] or 0) + harvestedAmt
 						-- Update storageInfo
-						si[idx] = nil
+						table.remove(si, idx)
 					end
 				end
 			end
 			parallel.waitForAll(table.unpack(pullers))
 		end
 		local function harvestFluid()
+			assert(ti ~= nil, machineName)
 			local pullers = {}
 			for idx = #ti, #ti - fluidPullCnt + 1, -1 do
 				local singleTank = ti[idx]
 				if singleTank.amount ~= 0 then
 					pullers[#pullers + 1] = function()
-						local harvestedAmt = fluidPuller(machineName, singleTank.amount, singleTank.name)
-						if harvestedAmt ~= 0 then
+						assert(singleTank.name and singleTank.amount, Helper.serializeTable(singleTank))
+						local shouldPullAmt = math.floor(singleTank.amount)
+						local harvestedAmt = fluidPuller(machineName, shouldPullAmt, singleTank.name)
+						assert(harvestedAmt == 0 or harvestedAmt == shouldPullAmt, Helper.serializeTable(singleTank) .. harvestedAmt)
+						if harvestedAmt == shouldPullAmt then
 							harvestedCtlg[singleTank.name] = (harvestedCtlg[singleTank.name] or 0) + harvestedAmt
 							-- Update tankInfo
 							singleTank.amount = 0
@@ -417,19 +423,28 @@ function M.updateFactory(fromAE)
 				accParaCost = 0
 			end
 
+			factoryStatus[mn] = {}
 			factoryStatus[mn].type = mt
 			statusGetters[#statusGetters + 1] = function()
 				parallel.waitForAll(
 					function() factoryStatus[mn].storageInfo = getStorageInfo(info) end,
 					function() factoryStatus[mn].tankInfo = getTankInfo(info) end,
-					function() harvestToBufferSingleMachine(mn, info, itemPullCnt, fluidPullCnt) end,
-					function() factoryStatus[mn].craftingInfo = getMachineCraftingInfo(info) end
+					function() factoryStatus[mn].craftingInfo = getMachineCraftingInfo(info) end,
+					function() harvestToBufferSingleMachine(mn, info, itemPullCnt, fluidPullCnt) end
 				)
 			end
 			accParaCost = accParaCost + thisParaCost
 		end
 	end
 	parallel.waitForAll(table.unpack(statusGetters))
+	-- for mn, rname in pairs(waitingRecipe) do
+	-- 	local infos = factoryStatus[mn]
+	-- 	if isEmptyMachine(infos.storageInfo, infos.tankInfo) then
+	-- 		-- All the waiting materials goes into running
+	-- 		waitingRecipe[mn] = nil
+	-- 		runningRecipe[mn] = rname
+	-- 	end
+	-- end
 	return harvestedCtlg
 end
 --------------------------------------------

@@ -47,7 +47,8 @@ end
 do -- Make other cutter recipes
 	local m = Recipes.makeSingleRecipeMaker(Machine.electric_cutting_machine, true, true, true, false)
 	local dm = Helper.dispNameMaker
-	m(I.monocrystalline_silicon, 1, nil, F.lubricant, 500, nil, I.silicon_wafer, 32, nil, dm(I.silicon_wafer), 16)
+	m(I.monocrystalline_silicon, 1, nil, F.lubricant, 500, nil, I.silicon_wafer, 32, nil, nil, 16)
+	m(I.glass, 6, nil, F.lubricant, 10, nil, I.glass_pane, 16, nil, nil, 2)
 end
 -------------------------------------------------
 do -- Make Blade recipes
@@ -577,7 +578,7 @@ do -- Assembler Recipes
 	m(I.electronic_circuit, 1, I.aluminum_rod, 2, I.motor, 6, nil, nil, I.large_motor, 1, nil, nil, 8)
 	m(I.electronic_circuit, 2, I.aluminum_rotor, 3, I.large_motor, 1, I.pump, 3, nil, nil, I.large_pump, 1, nil, nil, 8)
 	m(I.emerald_plate, 1, I.silicon_wafer, 2, I.platinum_fine_wire, 6, nil, nil, I.memory_management_unit, 1, nil, nil, 8)
-	m(I.steel_rod_magnetic, 1, I.steel_rod, 2, I.tin_cable, 2, I.copper_wire, 4, nil, nil, I.motor, 1, nil, nil, 8)
+	m(I.steel_rod_magnetic, 1, I.steel_rod, 2, I.tin_cable, 2, I.copper_wire, 4, nil, nil, I.motor, 1, nil, nil, 8):setMaxCount(I.steel_rod_magnetic, 1)
 	m(I.resistor, 1, I.op_amp, 1, I.aluminum_wire, 1, nil, nil, I.not_gate, 1, nil, nil, 8)
 	m(I.op_amp, 2, I.aluminum_wire, 2, I.diode, 1, nil, nil, I.or_gate, 1, nil, nil, 8)
 	m(I.motor, 1, I.steel_rod, 2, I.tin_cable, 2, I.steel_plate, 3, I.steel_gear, 1, nil, nil, I.piston, 1, nil, nil, 8)
@@ -596,6 +597,7 @@ do -- Assembler Recipes
 	m(I.steel_machine_casing, 1, I.motor, 2, I.analog_circuit, 4, I.hopper, 2, nil, nil, I.configurable_chest, 4, nil, nil, 8)
 	m(I.steel_machine_casing, 1, I.pump, 2, I.analog_circuit, 4, I.aluminum_tank, 2, nil, nil, I.configurable_tank, 4, nil, nil, 8)
 	m(I.cupronickel_wire_magnetic, 4, I.aluminum_rod, 2, I.basic_machine_hull, 1, I.electronic_circuit, 1, I.large_pump, 1, nil, nil, I.electrolyzer, 1, nil, nil, 8)
+	m(I.electronic_circuit, 1, I.large_motor, 2, I.advanced_machine_hull, 1, I.fluid_pipe, 2, I.aluminum_rotor, 2, I.electrum_cable, 1, nil, nil, I.mv_steam_turbine, 1, nil, nil, 8)
 	m(I.digital_circuit, 1, I.advanced_motor, 2, I.turbo_machine_hull, 1, I.fluid_pipe, 2, I.stainless_steel_rotor, 2, I.aluminum_cable, 1, nil, nil, I.hv_steam_turbine, 1, nil, nil, 8)
 	m(I.invar_rotary_blade, 1, I.motor, 2, I.piston, 2, I.basic_machine_hull, 1, I.tin_cable, 1, I.analog_circuit, 2, nil, nil, I.electric_macerator, 1, nil, nil, 8)
 	m(I.glass, 2, I.motor, 1, I.basic_machine_hull, 1, I.fluid_pipe, 1, I.tin_rotor, 2, I.analog_circuit, 2, nil, nil, I.electric_mixer, 1, nil, nil, 8)
@@ -729,14 +731,14 @@ do -- Turbine feeder
 	local mmv = Recipes.makeSingleRecipeMaker(Machine.mv_steam_turbine, false, true, false, false)
 	local mhv = Recipes.makeSingleRecipeMaker(Machine.hv_steam_turbine, false, true, false, false)
 
-	mlv(F.steam, 8000, nil, "lv steem feed", 0):setAlwaysProc()
-	mmv(F.steam, 16000, nil, "mv steem feed", 0):setAlwaysProc()
-	mhv(F.steam, 16000, nil, "hv steem feed", 0):setAlwaysProc()
+	mlv(F.steam, 500, nil, "lv steem feed", 0):setAlwaysProc()
+	mmv(F.steam, 2000, nil, "mv steem feed", 0):setAlwaysProc()
+	mhv(F.steam, 8000, nil, "hv steem feed", 0):setAlwaysProc()
 end
 -------------------------------------------------
 do -- Test Recipes
 	local m = Recipes.makeSingleRecipeMaker(CustomMachine.trashCan, true, true, false, false)
-	m(I.emerald_tiny_dust, 16, nil, nil, "eme", 0):setPaddings(I.emerald_tiny_dust, 64):setAlwaysProc()
+	-- m(I.emerald_tiny_dust, 16, nil, nil, "eme", 0):setPaddings(I.emerald_tiny_dust, 64):setAlwaysProc()
 end
 -------------------------------------------------
 local function recipeSort(a, b)
